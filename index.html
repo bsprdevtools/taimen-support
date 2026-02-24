@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="対応履歴">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a365d' width='100' height='100' rx='20'/><text x='50' y='65' text-anchor='middle' font-size='50'>📋</text></svg>">
+<title>対面サポート CRM カルテ</title>
+<style>
+/* ============================================================
+   対面サポート支援システム v4.0 - CRM型ユーザーカルテUI
+   Target: iPad Pro 1st gen (2015) / iOS 16 Safari
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy-900:#0c1a2e;--navy-800:#122341;--navy-700:#1a365d;
+  --navy-600:#234681;--navy-500:#2c5aa0;--navy-400:#4a7cc9;
+  --navy-100:#dbeafe;--navy-50:#eff6ff;
+  --blue:#3b82f6;--blue-hover:#2563eb;--blue-light:rgba(59,130,246,.08);
+  --bg:#f0f2f5;--bg2:#e8ebf0;--bg3:#d5dbe5;
+  --card:#ffffff;--border:#d1d5db;--border-lt:#e5e7eb;
+  --text:#111827;--text2:#4b5563;--text3:#6b7280;
+  --green:#059669;--green-bg:#d1fae5;--green-light:#ecfdf5;
+  --amber:#d97706;--amber-bg:#fef3c7;--amber-light:#fffbeb;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --purple:#7c3aed;--purple-bg:#ede9fe;
+  --r:10px;--r-lg:14px;--r-xl:18px;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 6px rgba(0,0,0,.06),0 2px 4px rgba(0,0,0,.04);
+  --sh-lg:0 10px 15px rgba(0,0,0,.08),0 4px 6px rgba(0,0,0,.04);
+  --tr:.2s ease;
+}
+html{font-size:16px;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",system-ui,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;
+  min-height:100vh;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;
+}
+
+/* ===== LOGIN ===== */
+#loginScreen{
+  position:fixed;inset:0;
+  background:linear-gradient(155deg,var(--navy-900) 0%,var(--navy-700) 50%,var(--navy-500) 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.login-box{
+  background:var(--card);border-radius:24px;box-shadow:var(--sh-lg),0 0 60px rgba(0,0,0,.15);
+  padding:48px 40px;width:100%;max-width:360px;text-align:center;
+}
+.login-logo{
+  width:68px;height:68px;
+  background:linear-gradient(135deg,var(--navy-700),var(--navy-500));
+  border-radius:16px;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;color:#fff;box-shadow:0 4px 12px rgba(26,54,93,.3);
+}
+.login-title{font-size:1.2rem;font-weight:700;color:var(--navy-700);margin-bottom:2px}
+.login-sub{font-size:.85rem;color:var(--text2);margin-bottom:30px}
+.dots{display:flex;justify-content:center;gap:16px;margin-bottom:28px}
+.dot{width:15px;height:15px;border-radius:50%;border:2.5px solid var(--border);background:var(--card);transition:all .25s ease}
+.dot.on{background:var(--navy-700);border-color:var(--navy-700);transform:scale(1.1)}
+.dot.err{background:var(--red);border-color:var(--red);animation:shake .4s}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:252px;margin:0 auto}
+.np{
+  width:72px;height:72px;border:none;border-radius:50%;background:var(--bg);
+  font-size:1.5rem;font-weight:500;color:var(--navy-700);cursor:pointer;
+  transition:all .15s ease;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;justify-content:center;margin:0 auto;
+  -webkit-user-select:none;user-select:none;
+}
+.np:active{background:var(--navy-100);transform:scale(.92)}
+.np.empty{background:transparent;cursor:default}
+.np.empty:active{transform:none}
+.np.del{font-size:.95rem;background:transparent;color:var(--text2)}
+.login-err{color:var(--red);font-size:.85rem;margin-top:16px;min-height:24px;font-weight:500}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* ===== MAIN APP ===== */
+#app{display:none}
+.header{
+  background:linear-gradient(135deg,var(--navy-800),var(--navy-600));
+  color:#fff;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.header h1{font-size:1.1rem;font-weight:700;letter-spacing:.4px}
+.header-r{display:flex;align-items:center;gap:12px}
+.header-count{
+  font-size:.8rem;opacity:.9;font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.12);padding:4px 10px;border-radius:6px;
+}
+.h-btn{
+  padding:8px 14px;border:1px solid rgba(255,255,255,.35);border-radius:8px;
+  background:rgba(255,255,255,.1);color:#fff;font-size:.75rem;cursor:pointer;
+  font-weight:500;transition:all var(--tr);min-height:44px;
+  display:inline-flex;align-items:center;
+}
+.h-btn:active{background:rgba(255,255,255,.25)}
+
+/* ===== TABS ===== */
+.tabs{
+  display:flex;background:var(--card);border-bottom:1px solid var(--border-lt);
+  position:sticky;top:50px;z-index:99;
+}
+.tab{
+  flex:1;padding:13px 6px 11px;border:none;background:none;
+  font-size:.82rem;font-weight:500;color:var(--text3);cursor:pointer;
+  border-bottom:3px solid transparent;transition:all var(--tr);
+  -webkit-tap-highlight-color:transparent;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tab .ico{font-size:1.2rem}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+
+/* ===== PANELS ===== */
+.pnl{display:none;padding:20px 16px 100px;max-width:960px;margin:0 auto}
+.pnl.on{display:block}
+
+/* ===== CARDS ===== */
+.card{
+  background:var(--card);border-radius:var(--r-lg);
+  box-shadow:var(--sh);padding:20px;margin-bottom:16px;
+}
+.card-t{
+  font-size:.95rem;font-weight:700;color:var(--navy-700);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.card-t .ct-ico{font-size:1.1rem}
+
+/* ===== STATS ===== */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.st{
+  background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh);
+  padding:18px 16px;position:relative;overflow:hidden;
+  transition:transform var(--tr);cursor:pointer;
+}
+.st:active{transform:scale(.98)}
+.st::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:0 2px 2px 0}
+.st:nth-child(1)::before{background:var(--blue)}
+.st:nth-child(2)::before{background:var(--green)}
+.st:nth-child(3)::before{background:var(--amber)}
+.st:nth-child(4)::before{background:var(--purple)}
+.st-v{font-size:1.8rem;font-weight:800;color:var(--navy-800);line-height:1.1;font-variant-numeric:tabular-nums}
+.st-l{font-size:.75rem;color:var(--text2);margin-top:4px;font-weight:500}
+
+/* ===== SEARCH INPUT ===== */
+.sbox{display:flex;gap:10px}
+.sinput{
+  flex:1;padding:14px 16px;border:2px solid var(--border-lt);border-radius:var(--r);
+  font-size:1.05rem;outline:none;transition:border var(--tr),box-shadow var(--tr);
+  -webkit-appearance:none;background:var(--bg);min-height:52px;
+}
+.sinput:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(59,130,246,.1);background:var(--card)}
+.sinput::placeholder{color:var(--text3)}
+.sinput-lg{font-size:1.3rem;padding:18px 20px;min-height:64px;text-align:center;letter-spacing:1px}
+
+/* ===== BUTTONS ===== */
+.btn{
+  padding:14px 22px;border:none;border-radius:var(--r);
+  font-size:.9rem;font-weight:600;cursor:pointer;
+  min-height:52px;transition:all var(--tr);
+  -webkit-tap-highlight-color:transparent;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  -webkit-user-select:none;user-select:none;
+}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--blue);color:#fff}
+.btn-p:active{background:var(--blue-hover)}
+.btn-s{background:var(--bg2);color:var(--text)}
+.btn-g{background:transparent;color:var(--blue);border:1.5px solid var(--border)}
+.btn-d{background:var(--red);color:#fff}
+.btn-ok{background:var(--green);color:#fff}
+.btn-sm{padding:10px 16px;font-size:.82rem;min-height:40px}
+.btn-bl{width:100%;display:flex}
+
+/* ===== SUB TABS ===== */
+.stabs{display:flex;gap:4px;margin-bottom:18px;background:var(--bg2);padding:4px;border-radius:var(--r)}
+.stab{
+  flex:1;padding:11px 8px;border:none;border-radius:8px;background:transparent;
+  font-size:.85rem;font-weight:500;color:var(--text2);cursor:pointer;text-align:center;
+  transition:all var(--tr);-webkit-tap-highlight-color:transparent;min-height:44px;
+}
+.stab.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.06);font-weight:700}
+
+/* ===== FILTERS ===== */
+.frow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fsel{
+  padding:11px 12px;border:1.5px solid var(--border-lt);border-radius:8px;
+  font-size:.85rem;background:var(--bg);-webkit-appearance:none;
+  min-width:120px;min-height:44px;color:var(--text);
+}
+
+/* ===== RESULT CARDS ===== */
+.rc{
+  background:var(--card);border-radius:var(--r-lg);
+  box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;
+  border:1.5px solid var(--border-lt);transition:border-color var(--tr);
+}
+.rc.exp{border-color:var(--blue)}
+.rc-h{padding:16px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rc-h:active{background:var(--bg)}
+.rc-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.rc-sum{font-size:.88rem;color:var(--text2);line-height:1.5}
+.rc-b{display:none;padding:0 18px 18px;border-top:1px solid var(--border-lt)}
+.rc.exp .rc-b{display:block;padding-top:16px}
+.rc-arrow{float:right;color:var(--text3);font-size:.75rem;transition:transform var(--tr);margin-top:2px}
+.rc.exp .rc-arrow{transform:rotate(90deg);color:var(--blue)}
+
+/* ===== TAGS ===== */
+.tg{
+  display:inline-flex;align-items:center;
+  padding:3px 10px;border-radius:6px;
+  font-size:.72rem;font-weight:600;letter-spacing:.15px;white-space:nowrap;
+}
+.tg-dt{background:var(--navy-50);color:var(--navy-600)}
+.tg-id{background:var(--bg2);color:var(--navy-700);font-family:"SF Mono",Menlo,monospace;font-size:.72rem}
+.tg-dv{background:var(--green-light);color:#047857}
+.tg-ct{background:var(--amber-bg);color:#92400e}
+.tg-st{background:#fce7f3;color:#9d174d}
+.tg-esc{background:var(--red-bg);color:var(--red);font-weight:700}
+.tg-media{background:var(--purple-bg);color:var(--purple)}
+.tg-rep{background:#dbeafe;color:#1e40af;font-weight:700}
+
+/* Detail rows */
+.dl{margin-top:14px}
+.dl-l{font-size:.72rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.dl-v{font-size:.9rem;line-height:1.7;white-space:pre-wrap;color:var(--text)}
+
+/* Result info bar */
+.rinfo{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;padding:12px 16px;
+  background:var(--navy-50);border-radius:var(--r);font-size:.88rem;
+}
+.rinfo b{color:var(--navy-700)}
+
+/* ===== RECENT / TOP ===== */
+.rec{
+  padding:16px 0;border-bottom:1px solid var(--border-lt);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity var(--tr);
+}
+.rec:last-child{border-bottom:none}
+.rec:active{opacity:.6}
+.top-li{list-style:none}
+.top-li li{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--border-lt);font-size:.9rem;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.top-li li:last-child{border-bottom:none}
+.top-li li:active{opacity:.6}
+.top-n{font-weight:700;color:var(--blue);font-size:1.05rem;min-width:40px;text-align:right}
+
+/* Quick grid */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.qbtn{
+  padding:16px 10px;border:1.5px solid var(--border-lt);border-radius:var(--r);
+  background:var(--card);font-size:.82rem;font-weight:500;cursor:pointer;
+  text-align:center;transition:all var(--tr);-webkit-tap-highlight-color:transparent;
+  line-height:1.4;min-height:52px;
+}
+.qbtn:active{background:var(--navy-50);border-color:var(--blue)}
+.qbtn b{display:block;font-weight:700;color:var(--blue);font-size:1rem;margin-top:4px}
+
+/* ===== REMINDER / BANNERS ===== */
+.reminder{
+  background:linear-gradient(135deg,var(--amber-light),#fff7ed);
+  border:1.5px solid #fbbf24;border-radius:var(--r-lg);
+  padding:16px 18px;margin-bottom:18px;
+  display:flex;align-items:flex-start;gap:14px;
+  font-size:.88rem;color:#78350f;line-height:1.6;
+}
+.reminder-ico{font-size:1.6rem;flex-shrink:0;margin-top:2px}
+.rep-banner{
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:1.5px solid var(--blue);border-radius:var(--r-lg);
+  padding:16px 18px;margin-bottom:14px;
+  font-size:.9rem;color:var(--navy-700);line-height:1.6;
+}
+.rep-banner b{font-size:1.1rem}
+
+/* ===== KARTE ===== */
+.karte-search-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 20px 20px;
+}
+.karte-search-wrap .sinput-lg{max-width:480px;width:100%}
+.karte-search-hint{font-size:.85rem;color:var(--text3);margin-top:10px;text-align:center}
+
+/* Highlight Panel */
+.k-highlight{
+  background:linear-gradient(135deg,var(--navy-800),var(--navy-600));
+  color:#fff;border-radius:var(--r-xl);padding:22px 24px;margin-bottom:20px;
+  position:sticky;top:96px;z-index:50;box-shadow:var(--sh-lg);
+}
+.k-hl-id{font-size:1.3rem;font-weight:800;letter-spacing:1px;font-family:"SF Mono",Menlo,monospace}
+.k-hl-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;font-size:.88rem;opacity:.92}
+.k-hl-meta span{display:inline-flex;align-items:center;gap:4px}
+.k-hl-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.k-hl-tag{
+  display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;
+  font-size:.78rem;font-weight:600;background:rgba(255,255,255,.18);color:#fff;
+}
+.k-hl-tag.esc{background:rgba(220,38,38,.7)}
+.k-back{
+  display:inline-flex;align-items:center;gap:4px;
+  color:var(--blue);font-size:.88rem;font-weight:600;cursor:pointer;
+  padding:8px 12px;margin-bottom:12px;border:none;background:var(--card);
+  -webkit-tap-highlight-color:transparent;min-height:44px;
+  position:sticky;top:96px;z-index:51;border-radius:var(--r);box-shadow:var(--sh);
+}
+.k-back:active{opacity:.6}
+
+/* Previous visit card */
+.k-prev{
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:2px solid var(--blue);border-radius:var(--r-lg);
+  padding:20px;margin-bottom:20px;
+}
+.k-prev-t{font-size:.78rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.k-prev-cat{font-size:1.05rem;font-weight:700;color:var(--navy-700);margin-bottom:4px}
+.k-prev-staff{font-size:.85rem;color:var(--text2);margin-bottom:8px}
+.k-prev-body{font-size:.9rem;line-height:1.7;color:var(--text)}
+
+/* Stats grid inside karte */
+.k-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.k-stat-card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh);padding:18px}
+.k-stat-card h4{font-size:.78rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.k-stat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.88rem}
+.k-stat-row+.k-stat-row{border-top:1px solid var(--border-lt)}
+.k-stat-val{font-weight:700;color:var(--navy-700)}
+.k-cat-bar{height:6px;background:var(--bg2);border-radius:3px;flex:1;margin:0 10px;overflow:hidden}
+.k-cat-fill{height:100%;background:var(--blue);border-radius:3px}
+
+/* Timeline */
+.tl{position:relative;padding-left:28px}
+.tl::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{
+  position:absolute;left:-24px;top:4px;width:12px;height:12px;
+  border-radius:50%;background:var(--blue);border:2px solid var(--card);
+  z-index:1;
+}
+.tl-dot.esc{background:var(--red)}
+.tl-head{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:44px;
+}
+.tl-head:active{opacity:.7}
+.tl-date{font-size:.82rem;font-weight:700;color:var(--navy-700)}
+.tl-body{
+  display:none;margin-top:10px;padding:14px;
+  background:var(--bg);border-radius:var(--r);font-size:.88rem;line-height:1.7;
+}
+.tl-item.open .tl-body{display:block}
+.tl-arrow{font-size:.7rem;color:var(--text3);transition:transform var(--tr)}
+.tl-item.open .tl-arrow{transform:rotate(90deg);color:var(--blue)}
+
+/* Repeater list */
+.rep-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 0;border-bottom:1px solid var(--border-lt);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:52px;
+}
+.rep-item:last-child{border-bottom:none}
+.rep-item:active{opacity:.6}
+.rep-id{font-family:"SF Mono",Menlo,monospace;font-weight:600;color:var(--navy-700);font-size:.9rem}
+.rep-info{font-size:.8rem;color:var(--text2);margin-top:2px}
+.rep-count{
+  background:var(--blue);color:#fff;font-weight:700;font-size:.82rem;
+  padding:4px 12px;border-radius:20px;white-space:nowrap;
+}
+
+/* ===== SETTINGS ===== */
+.scard{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh);padding:24px;margin-bottom:16px}
+.scard-t{font-size:.95rem;font-weight:700;color:var(--navy-700);margin-bottom:6px}
+.scard-d{font-size:.85rem;color:var(--text2);margin-bottom:16px;line-height:1.6}
+.scard-m{font-size:.85rem;color:var(--text2);margin-top:12px}
+.sbar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-top:8px}
+.sbar-f{height:100%;background:var(--blue);border-radius:4px;transition:width .3s}
+.pwa-notice{
+  background:var(--navy-50);border:1.5px solid var(--navy-100);
+  border-radius:var(--r-lg);padding:16px 18px;margin-bottom:16px;
+  font-size:.85rem;color:var(--navy-700);line-height:1.6;
+}
+.pwa-notice b{display:block;margin-bottom:4px;font-size:.9rem}
+.pwa-banner{
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:1.5px solid var(--blue);border-radius:var(--r-lg);
+  padding:16px 18px;margin-bottom:18px;
+  display:flex;align-items:flex-start;gap:14px;
+  font-size:.85rem;color:var(--navy-700);line-height:1.6;
+}
+.pwa-banner-ico{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.pwa-banner-x{
+  border:none;background:none;color:var(--text3);font-size:1.2rem;
+  cursor:pointer;padding:4px;margin-left:auto;flex-shrink:0;
+  min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;
+}
+
+/* ===== MODAL ===== */
+.mo{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
+}
+.mo.on{display:flex;justify-content:center;align-items:flex-start}
+.mo-c{
+  background:var(--card);border-radius:var(--r-xl);
+  width:100%;max-width:640px;margin:20px auto;
+  overflow:hidden;box-shadow:var(--sh-lg);
+}
+.mo-top{
+  background:linear-gradient(135deg,var(--navy-800),var(--navy-600));
+  color:#fff;padding:18px 22px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.mo-top h2{font-size:1rem;font-weight:700}
+.mo-x{
+  width:44px;height:44px;border:none;background:rgba(255,255,255,.15);
+  color:#fff;border-radius:50%;font-size:1.3rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--tr);
+}
+.mo-x:active{background:rgba(255,255,255,.3)}
+.mo-bd{padding:22px}
+.mo-sec{margin-bottom:20px}
+.mo-sec:last-child{margin-bottom:0}
+.mo-sec-t{
+  font-size:.72rem;color:var(--text3);font-weight:700;
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;
+  padding-bottom:6px;border-bottom:1px solid var(--border-lt);
+}
+.mo-f{margin-bottom:14px}
+.mo-f:last-child{margin-bottom:0}
+.mo-fl{font-size:.7rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.mo-fv{font-size:.92rem;line-height:1.7;white-space:pre-wrap}
+
+/* ===== TOAST ===== */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  padding:14px 28px;border-radius:var(--r);box-shadow:var(--sh-lg);
+  font-size:.88rem;font-weight:500;z-index:300;
+  display:none;max-width:90%;text-align:center;color:#fff;
+}
+.toast.i{background:var(--navy-700)}
+.toast.ok{background:var(--green)}
+.toast.er{background:var(--red)}
+.toast.v{display:block;animation:tin .3s ease}
+@keyframes tin{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ===== EMPTY ===== */
+.empty-state{text-align:center;padding:50px 24px}
+.empty-i{font-size:3rem;margin-bottom:12px;opacity:.5}
+.empty-t{font-size:.92rem;color:var(--text2);line-height:1.7}
+
+/* ===== RESPONSIVE ===== */
+@media(min-width:768px){
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .pnl{padding:24px 20px 100px}
+  .r2c{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .qgrid{grid-template-columns:repeat(4,1fr)}
+  .k-stats{grid-template-columns:1fr 1fr}
+}
+@media(max-width:767px){
+  .tab{font-size:.72rem;padding:11px 3px}.tab .ico{font-size:1rem}
+  .login-box{padding:36px 24px}.np{width:64px;height:64px;font-size:1.3rem}
+  .k-stats{grid-template-columns:1fr}
+  .k-highlight{position:static}
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">📋</div>
+    <div class="login-title">対面サポート支援システム</div>
+    <div class="login-sub">パスコードを入力してください</div>
+    <div class="dots" id="dots">
+      <div class="dot" id="d0"></div><div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+    </div>
+    <div class="numpad">
+      <button class="np" onclick="nd('1')">1</button>
+      <button class="np" onclick="nd('2')">2</button>
+      <button class="np" onclick="nd('3')">3</button>
+      <button class="np" onclick="nd('4')">4</button>
+      <button class="np" onclick="nd('5')">5</button>
+      <button class="np" onclick="nd('6')">6</button>
+      <button class="np" onclick="nd('7')">7</button>
+      <button class="np" onclick="nd('8')">8</button>
+      <button class="np" onclick="nd('9')">9</button>
+      <button class="np empty"></button>
+      <button class="np" onclick="nd('0')">0</button>
+      <button class="np del" onclick="ndel()">&#9003;</button>
+    </div>
+    <div class="login-err" id="lerr"></div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div class="header">
+    <h1>📋 対面サポート支援</h1>
+    <div class="header-r">
+      <span class="header-count" id="hCount">0件</span>
+      <span class="header-count" id="syncStatus" style="font-size:.7rem;opacity:.8">---</span>
+      <button class="h-btn" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab on" onclick="go('home')" role="tab" aria-selected="true" aria-controls="p-home"><span class="ico">🏠</span>ホーム</button>
+    <button class="tab" onclick="go('karte')" role="tab" aria-selected="false" aria-controls="p-karte"><span class="ico">👤</span>カルテ</button>
+    <button class="tab" onclick="go('search')" role="tab" aria-selected="false" aria-controls="p-search"><span class="ico">🔍</span>検索</button>
+    <button class="tab" onclick="go('settings')" role="tab" aria-selected="false" aria-controls="p-settings"><span class="ico">⚙️</span>設定</button>
+  </div>
+
+  <!-- ===== HOME ===== -->
+  <div class="pnl on" id="p-home">
+    <div id="nodata" class="empty-state">
+      <div class="empty-i">📋</div>
+      <p class="empty-t">データがまだありません<br>設定タブからCSVをインポートしてください</p>
+      <button class="btn btn-p" style="margin-top:16px" onclick="go('settings')">CSVインポートへ</button>
+    </div>
+    <div id="hasdata" style="display:none">
+      <div class="pwa-banner" id="pwaBanner" style="display:none">
+        <span class="pwa-banner-ico">📲</span>
+        <div>
+          <b>ホーム画面に追加してください</b><br>
+          Safari下部の <b>共有ボタン（□↑）</b>→「<b>ホーム画面に追加</b>」で、アプリとして使えます。<br>
+          <span style="color:var(--red);font-weight:600">追加しないと7日後にデータが消える場合があります</span>
+        </div>
+        <button class="pwa-banner-x" onclick="dismissPwaBanner()" aria-label="閉じる">×</button>
+      </div>
+      <div class="reminder">
+        <span class="reminder-ico">📸</span>
+        <div>
+          <b>トラブル対応時のリマインド</b><br>
+          問題が発生したら<b>スクリーンショット</b>または<b>動画撮影</b>を忘れずに！<br>
+          後からの原因調査・開発チームへの共有に必須です。
+        </div>
+      </div>
+
+      <!-- Quick ID Search -->
+      <div class="card">
+        <div class="card-t"><span class="ct-ico">🔎</span>ユーザーID クイック検索</div>
+        <div class="sbox">
+          <input class="sinput" id="qi" placeholder="ユーザーID（例: 582619058）" inputmode="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="ユーザーID クイック検索">
+          <button class="btn btn-p" onclick="quickSearch()">検索</button>
+        </div>
+        <div id="qr" style="margin-top:12px"></div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="card">
+        <div class="card-t"><span class="ct-ico">📊</span>よくある相談カテゴリ</div>
+        <div class="qgrid" id="qgrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span class="ct-ico">🕐</span>最近の対応（直近5件）</div>
+        <div id="recent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KARTE ===== -->
+  <div class="pnl" id="p-karte">
+    <div id="karteInit">
+      <div class="karte-search-wrap">
+        <div style="font-size:1.5rem;margin-bottom:8px">👤</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--navy-700);margin-bottom:16px">ユーザーカルテ</div>
+        <input class="sinput sinput-lg" id="karteId" placeholder="ユーザーIDを入力" inputmode="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="カルテ用ユーザーID">
+        <button class="btn btn-p btn-bl" style="margin-top:12px;max-width:480px" onclick="var v=document.getElementById('karteId').value.trim();if(v)showKarte(v);">カルテを表示</button>
+        <div class="karte-search-hint">IDを入力して「カルテを表示」ボタンを押してください</div>
+      </div>
+      <div id="karteRecent" style="margin-top:20px"></div>
+      <div id="karteRepeaters" style="margin-top:20px"></div>
+    </div>
+    <div id="karteView" style="display:none"></div>
+  </div>
+
+  <!-- ===== SEARCH ===== -->
+  <div class="pnl" id="p-search">
+    <div class="stabs" id="searchStabs">
+      <button class="stab on" onclick="setSearchMode('uid')">ユーザーID</button>
+      <button class="stab" onclick="setSearchMode('dev')">機種別</button>
+      <button class="stab" onclick="setSearchMode('kw')">フリーワード</button>
+    </div>
+    <div class="card" style="padding:18px">
+      <div id="m-uid">
+        <div class="sbox">
+          <input class="sinput" id="si-uid" placeholder="ユーザーID（ハイフン不要）" inputmode="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="ユーザーID検索">
+          <button class="btn btn-p" onclick="doSearch()">検索</button>
+        </div>
+      </div>
+      <div id="m-dev" style="display:none">
+        <div class="sbox">
+          <input class="sinput" id="si-dev" placeholder="機種名（例: AQUOS, Pixel, Galaxy）" autocomplete="off">
+          <button class="btn btn-p" onclick="doSearch()">検索</button>
+        </div>
+        <div id="devSummary" style="margin-top:12px"></div>
+      </div>
+      <div id="m-kw" style="display:none">
+        <div class="sbox">
+          <input class="sinput" id="si-kw" placeholder="キーワード（例: 歩数 カウント）" autocomplete="off">
+          <button class="btn btn-p" onclick="doSearch()">検索</button>
+        </div>
+        <div class="frow">
+          <select class="fsel" id="fc"><option value="">カテゴリ：全て</option></select>
+          <select class="fsel" id="fs"><option value="">担当：全て</option></select>
+          <select class="fsel" id="fp">
+            <option value="">期間：全て</option>
+            <option value="week">今週</option>
+            <option value="1">今月</option>
+            <option value="last">先月</option>
+            <option value="3">過去3ヶ月</option>
+            <option value="6">過去6ヶ月</option>
+            <option value="year">今年</option>
+          </select>
+          <select class="fsel" id="fe">
+            <option value="">エスカレ：全て</option>
+            <option value="yes">エスカレあり</option>
+            <option value="no">エスカレなし</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div id="ri" style="display:none" class="rinfo">
+      <span><b id="rn">0</b>件の結果</span>
+      <button class="btn btn-sm btn-g" onclick="clearResults()">クリア</button>
+    </div>
+    <div id="sr" aria-live="polite"></div>
+    <div id="se" class="empty-state"><div class="empty-i">🔍</div><p class="empty-t">上の検索欄に条件を入力して検索してください</p></div>
+    <div id="smore" style="display:none;text-align:center;margin-top:14px">
+      <button class="btn btn-g" onclick="showMore()">もっと見る</button>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS ===== -->
+  <div class="pnl" id="p-settings">
+    <div style="font-size:1.1rem;font-weight:700;color:var(--navy-700);margin-bottom:18px">データ管理</div>
+    <div class="pwa-notice">
+      <b>💡 ホーム画面への追加を推奨</b>
+      Safari → 共有ボタン → 「ホーム画面に追加」でアプリとして利用できます。<br>
+      データの長期保持にも効果的です。
+    </div>
+    <div class="scard">
+      <div class="scard-t">データ同期</div>
+      <div class="scard-d">サーバーから最新データを取得します。通常はページ読み込み時に自動同期されます。</div>
+      <button class="btn btn-p btn-bl" onclick="fetchLatestData()">今すぐ同期</button>
+      <div class="scard-m" id="syncInfo">最終同期: ---</div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">CSVインポート（手動）</div>
+      <div class="scard-d">ネットワーク接続がない場合やCSVファイルを直接読み込みたい場合に使用します。</div>
+      <input type="file" id="cf" accept=".csv" style="display:none" onchange="importCSV(this)">
+      <button class="btn btn-p btn-bl" onclick="document.getElementById('cf').click()">CSVファイルを選択</button>
+      <div class="scard-m" id="im">現在: 0件</div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">CSVエクスポート</div>
+      <div class="scard-d">バックアップ用にCSVファイルをダウンロードします。定期的な保存を推奨します。</div>
+      <button class="btn btn-ok btn-bl" onclick="exportCSV()">CSVをエクスポート</button>
+    </div>
+    <div class="scard">
+      <div class="scard-t">ストレージ使用量</div>
+      <div class="scard-m" id="sto">計算中...</div>
+      <div class="sbar"><div class="sbar-f" id="sbf" style="width:0%"></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-t" style="color:var(--red)">⚠️ データ削除</div>
+      <div class="scard-d">すべてのデータを削除します。この操作は元に戻せません。</div>
+      <button class="btn btn-d btn-bl" onclick="nukeData()">すべて削除</button>
+    </div>
+    <div style="text-align:center;color:var(--text3);font-size:.75rem;margin-top:24px;line-height:1.8">
+      対面サポート支援システム v4.0<br>
+      &copy; 2026 株式会社ベスプラ
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="mo" id="mo" role="dialog" aria-modal="true" aria-labelledby="moTitle">
+  <div class="mo-c">
+    <div class="mo-top">
+      <h2 id="moTitle">対応詳細</h2>
+      <button class="mo-x" onclick="closeModal()" aria-label="閉じる">×</button>
+    </div>
+    <div class="mo-bd" id="mob"></div>
+  </div>
+</div>
+
+<div class="toast" id="tt"></div>
+
+<script>
+/* ============================================================
+   対面サポート支援システム v4.0 - CRM型ユーザーカルテUI
+   ============================================================ */
+
+// ===== CONFIG =====
+var CONFIG = {
+  passcode: '2580',
+  storageKey: 'taimen_v3',
+  sessionKey: 'taimen_session',
+  pageSize: 50,
+  dataUrl: 'data.enc',
+  syncKey: 'taimen_last_sync',
+  pbkdf2Salt: 'taimen_support_v4_salt_2026',
+  pbkdf2Iterations: 100000
+};
+
+// ===== STATE =====
+var STATE = {
+  data: [],
+  results: [],
+  displayCount: CONFIG.pageSize,
+  searchMode: 'uid',
+  karteHistory: [],
+  currentKarteId: null,
+  cryptoKey: null
+};
+
+// ===== CATEGORY RULES =====
+var CATEGORY_RULES = [
+  [['スライドパズル','スライド'], 'スライドパズル'],
+  [['ジグソーパズル','ジグソー'], 'ジグソーパズル'],
+  [['まちがい探し','間違い探し'], 'まちがい探し'],
+  [['nバック','n-back','エヌバック'], 'Nバック課題'],
+  [['初期化','消えた','消してしまった','アンインストール','削除してしまった','消失'], 'データ復旧・引継ぎ'],
+  [['引継ぎ','引き継ぎ','機種変更','移行','データ移行'], 'データ復旧・引継ぎ'],
+  [['真っ白','白い画面','起動しない','立ち上がらない','開かない','表示されない','画面が白'], '画面真っ白'],
+  [['フリーズ','固まる','重い','落ちる','不具合'], 'アプリ動作・表示不具合'],
+  [['歩数','歩数計','万歩','歩行ペース'], '歩数カウント'],
+  [['ランキング','順位'], '歩数ランキング'],
+  [['ウォーキング','チャレンジ'], 'ウォーキングチャレンジ'],
+  [['paypay','ペイペイ'], 'PayPayポイント'],
+  [['ポイント','交換','giftee','waon'], 'ポイント申請・交換'],
+  [['クーポン'], 'クーポン'],
+  [['脳トレ','脳にいい','特別対戦'], '脳トレ機能'],
+  [['効果音','音が出'], '脳トレ効果音'],
+  [['認知機能','テスト結果'], '認知機能テスト'],
+  [['インストール','新規登録','申し込み','申込'], '新規登録'],
+  [['ユーザーid','パスワード','ログイン','ログインできない'], 'ID関連'],
+  [['qrコード','コード読み取り'], 'QRコード'],
+  [['友達紹介','招待','紹介コード'], '友達紹介'],
+  [['退会','解約','やめたい'], '退会'],
+  [['食事','食材','食事項目'], '食事項目'],
+  [['スター','番付'], 'スター'],
+  [['スマートウォッチ','ウォッチ'], 'スマートウォッチ'],
+  [['かんたん健康','健康管理'], 'かんたん健康管理'],
+  [['操作方法','どうやって'], '機能の使い方'],
+  [['要望','改善してほしい','希望'], 'ご意見・要望']
+];
+
+function categorize(text) {
+  if (!text) return 'その他・一般';
+  var s = String(text).toLowerCase();
+  for (var i = 0; i < CATEGORY_RULES.length; i++) {
+    var keywords = CATEGORY_RULES[i][0];
+    var category = CATEGORY_RULES[i][1];
+    for (var j = 0; j < keywords.length; j++) {
+      if (s.indexOf(keywords[j].toLowerCase()) !== -1) return category;
+    }
+  }
+  return 'その他・一般';
+}
+
+// ===== DEVICE NORMALIZATION =====
+function normalizeDevice(raw) {
+  if (!raw) return '不明';
+  var d = String(raw).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  d = d.replace(/Andoroid/gi, 'Android').replace(/Androud/gi, 'Android');
+  return d;
+}
+
+function simplifyDevice(raw) {
+  var d = normalizeDevice(raw).toUpperCase();
+  if (d.indexOf('IPHONE') !== -1 || d.indexOf('IOS') !== -1) return 'iPhone';
+  if (d.indexOf('AQUOS') !== -1) return 'AQUOS';
+  if (d.indexOf('XPERIA') !== -1) return 'Xperia';
+  if (d.indexOf('PIXEL') !== -1) return 'Pixel';
+  if (d.indexOf('GALAXY') !== -1) return 'Galaxy';
+  if (d.indexOf('OPPO') !== -1) return 'OPPO';
+  if (d.indexOf('京セラ') !== -1 || d.indexOf('KYOCERA') !== -1 || d.indexOf('BASIO') !== -1 || d.indexOf('TORQUE') !== -1) return '京セラ';
+  if (d.indexOf('ARROWS') !== -1 || d.indexOf('らくらく') !== -1 || d.indexOf('FCNT') !== -1 || d.indexOf('F-51') !== -1 || d.indexOf('F-52') !== -1 || d.indexOf('F53') !== -1 || d.indexOf('楽々') !== -1) return 'arrows/らくスマ';
+  if (d.indexOf('XIAOMI') !== -1 || d.indexOf('REDMI') !== -1) return 'Xiaomi';
+  if (d.indexOf('HUAWEI') !== -1) return 'Huawei';
+  if (d.indexOf('シニア') !== -1 || d.indexOf('かんたん') !== -1) return 'かんたんスマホ';
+  if (d.indexOf('ANDROID') !== -1) return 'その他Android';
+  if (d === '不明' || d === '未確認' || d === 'NAN') return '不明';
+  return d;
+}
+
+// ===== STAFF NORMALIZATION =====
+function normalizeStaff(raw) {
+  if (!raw || raw === 'nan') return '';
+  var s = String(raw).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  s = s.replace(/様$/g, '').replace(/説明者[（(]/g, '').replace(/[）)]/g, '').replace(/↓/g, ',');
+  s = s.replace(/\s+/g, ',').replace(/,+/g, ',').replace(/^,|,$/g, '');
+  return s;
+}
+
+// ===== PERSONAL NAME MASK =====
+function maskName(text) {
+  if (!text) return '';
+  return text.replace(/([一-龥ぁ-んァ-ヶ]{1,6})(様|さん|氏)/g, function(match, name, suffix) {
+    var exceptions = ['皆','開発','担当','弊社','御社','当社','本人','市役所','自治体',
+      '遠山','ベスプラ','掛川','南口','八王子','てくポ','脳にいい'];
+    for (var i = 0; i < exceptions.length; i++) {
+      if (name.indexOf(exceptions[i]) !== -1) return match;
+    }
+    return '***' + suffix;
+  });
+}
+
+// ===== ESCALATION / MEDIA DETECTION =====
+function hasEscalation(rec) {
+  var t = ((rec.response || '') + ' ' + (rec.notes || '')).toLowerCase();
+  return t.indexOf('遠山') !== -1;
+}
+
+function hasMediaCapture(rec) {
+  var t = ((rec.response || '') + ' ' + (rec.notes || '')).toLowerCase();
+  return t.indexOf('スクリーンショット') !== -1 || t.indexOf('スクショ') !== -1 ||
+    t.indexOf('動画') !== -1 || t.indexOf('撮影') !== -1 || t.indexOf('写真') !== -1;
+}
+
+// ===== CSV PARSER (RFC 4180) =====
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  var records = [];
+  var fields = [], field = '', inQuotes = false;
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') { inQuotes = true; }
+      else if (c === ',') { fields.push(field); field = ''; }
+      else if (c === '\n' || (c === '\r' && text[i + 1] === '\n')) {
+        fields.push(field); field = '';
+        if (c === '\r') i++;
+        records.push(fields); fields = [];
+      } else if (c === '\r') {
+        fields.push(field); field = '';
+        records.push(fields); fields = [];
+      } else {
+        field += c;
+      }
+    }
+  }
+  fields.push(field);
+  if (fields.some(function(f) { return f.trim(); })) records.push(fields);
+  return records;
+}
+
+function csvToRecords(csvText) {
+  var rows = parseCSV(csvText);
+  if (rows.length < 2) return [];
+  var header = rows[0].map(function(h) { return h.trim(); });
+  var colMap = {};
+  header.forEach(function(h, i) { colMap[h] = i; });
+  var records = [];
+  for (var r = 1; r < rows.length; r++) {
+    var row = rows[r];
+    if (!row || row.length < 6) continue;
+    var get = function(key) {
+      var idx = colMap[key];
+      var val = (idx !== undefined && row[idx]) ? row[idx].trim() : '';
+      return (val === 'nan' || val === 'NaN') ? '' : val;
+    };
+    var date = get('日付');
+    if (!date || date === 'nan') continue;
+    var userId = get('UserID');
+    if (['以下、余白', 'nan', '以下余白', '項番'].some(function(v) { return userId.indexOf(v) !== -1; })) userId = '';
+    var rec = {
+      no: get('No'),
+      date: date,
+      startTime: get('開始時間'),
+      endTime: get('終了時間'),
+      duration: get('対応時間'),
+      userId: userId,
+      device: normalizeDevice(get('機種')),
+      deviceSimple: simplifyDevice(get('機種')),
+      gender: (get('性別') === 'nan' ? '' : get('性別')),
+      complaint: get('相談内容'),
+      response: get('対応内容'),
+      notes: get('特記事項'),
+      staff: normalizeStaff(get('担当')),
+      location: get('場所'),
+      importDate: get('インポート日'),
+      category: ''
+    };
+    rec.category = categorize(rec.complaint + ' ' + rec.response);
+    records.push(rec);
+  }
+  return records;
+}
+
+// ===== DATA MANAGEMENT =====
+function loadData() {
+  try {
+    var raw = localStorage.getItem(CONFIG.storageKey);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      STATE.data = parsed.records || [];
+    }
+  } catch (e) {
+    STATE.data = [];
+  }
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify({
+      version: 4,
+      timestamp: new Date().toISOString(),
+      count: STATE.data.length,
+      records: STATE.data
+    }));
+  } catch (e) {
+    toast('保存に失敗しました', 'er');
+  }
+}
+
+function mergeData(newRecords) {
+  var existingKeys = {};
+  STATE.data.forEach(function(r) {
+    existingKeys[r.date + '|' + r.startTime + '|' + r.userId + '|' + r.no] = true;
+  });
+  var added = 0;
+  for (var i = 0; i < newRecords.length; i++) {
+    var rec = newRecords[i];
+    var key = rec.date + '|' + rec.startTime + '|' + rec.userId + '|' + rec.no;
+    if (!existingKeys[key]) {
+      STATE.data.push(rec);
+      existingKeys[key] = true;
+      added++;
+    }
+  }
+  STATE.data.sort(function(a, b) {
+    return (b.date || '').localeCompare(a.date || '') || (b.startTime || '').localeCompare(a.startTime || '');
+  });
+  saveData();
+  return { added: added, skipped: newRecords.length - added };
+}
+
+// ===== CRYPTO: PBKDF2 + AES-GCM =====
+function deriveKey(passcode) {
+  var enc = new TextEncoder();
+  var saltBytes = enc.encode(CONFIG.pbkdf2Salt);
+  return crypto.subtle.importKey(
+    'raw', enc.encode(passcode), 'PBKDF2', false, ['deriveKey']
+  ).then(function(baseKey) {
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: saltBytes, iterations: CONFIG.pbkdf2Iterations, hash: 'SHA-256' },
+      baseKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+  });
+}
+
+function decryptData(key, b64Data) {
+  var binaryStr = atob(b64Data);
+  var bytes = new Uint8Array(binaryStr.length);
+  for (var i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  var iv = bytes.slice(0, 12);
+  var ciphertext = bytes.slice(12);
+  return crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: iv },
+    key,
+    ciphertext
+  ).then(function(plainBuf) {
+    return new TextDecoder().decode(plainBuf);
+  });
+}
+
+function fetchLatestData() {
+  if (!STATE.cryptoKey) return;
+  var syncIndicator = document.getElementById('syncStatus');
+  if (syncIndicator) syncIndicator.textContent = '同期中...';
+
+  fetch(CONFIG.dataUrl, { cache: 'no-store' })
+    .then(function(res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
+    .then(function(b64Data) {
+      return decryptData(STATE.cryptoKey, b64Data.trim());
+    })
+    .then(function(csvText) {
+      var records = csvToRecords(csvText);
+      if (!records.length) { toast('復号成功、有効レコードなし', 'i'); return; }
+      var before = STATE.data.length;
+      var result = mergeData(records);
+      var now = new Date().toISOString();
+      localStorage.setItem(CONFIG.syncKey, now);
+      if (syncIndicator) syncIndicator.textContent = '最終同期: ' + formatSyncTime(now);
+      if (result.added > 0) {
+        toast('サーバーから' + result.added + '件の新規データを取得（合計' + STATE.data.length + '件）', 'ok');
+        refreshAll();
+      } else if (before === 0) {
+        toast(records.length + '件のデータを読み込みました', 'ok');
+        refreshAll();
+      } else {
+        toast('データは最新です（' + STATE.data.length + '件）', 'i');
+      }
+    })
+    .catch(function(err) {
+      var msg = String(err.message || err);
+      if (msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('NetworkError') !== -1 || msg.indexOf('HTTP') !== -1) {
+        if (STATE.data.length > 0) {
+          toast('オフラインモード: 前回のデータを表示中', 'i');
+        } else {
+          toast('ネットワーク接続を確認してください', 'er');
+        }
+      } else {
+        toast('データの復号に失敗しました', 'er');
+      }
+      var lastSync = localStorage.getItem(CONFIG.syncKey);
+      if (syncIndicator && lastSync) syncIndicator.textContent = '最終同期: ' + formatSyncTime(lastSync);
+      else if (syncIndicator) syncIndicator.textContent = '未同期';
+    });
+}
+
+function formatSyncTime(isoStr) {
+  try {
+    var d = new Date(isoStr);
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  } catch(e) { return isoStr; }
+}
+
+// ===== REPEATER DETECTION =====
+var INVALID_UIDS = ['未確認', '確認漏れ', '失念しました', 'ー', '未登録', ''];
+function isValidUserId(uid) {
+  if (!uid) return false;
+  if (INVALID_UIDS.indexOf(uid) !== -1) return false;
+  if (uid.indexOf('項番') !== -1 || uid.indexOf('余白') !== -1) return false;
+  return true;
+}
+
+function getRepeatCount(userId) {
+  if (!isValidUserId(userId)) return 0;
+  var count = 0;
+  for (var i = 0; i < STATE.data.length; i++) {
+    if (STATE.data[i].userId === userId) count++;
+  }
+  return count;
+}
+
+function getRepeatUsers() {
+  var counts = {};
+  STATE.data.forEach(function(r) {
+    if (isValidUserId(r.userId)) {
+      counts[r.userId] = (counts[r.userId] || 0) + 1;
+    }
+  });
+  return Object.keys(counts)
+    .filter(function(k) { return counts[k] > 1; })
+    .map(function(k) { return [k, counts[k]]; })
+    .sort(function(a, b) { return b[1] - a[1]; });
+}
+
+// ===== KARTE (NEW) =====
+function buildKarte(userId) {
+  var records = STATE.data
+    .filter(function(r) { return r.userId === userId; })
+    .sort(function(a, b) {
+      return (b.date || '').localeCompare(a.date || '') || (b.startTime || '').localeCompare(a.startTime || '');
+    });
+  if (!records.length) return null;
+
+  var latest = records[0];
+  var oldest = records[records.length - 1];
+
+  // Category counts
+  var categories = {};
+  var staffCounts = {};
+  var escalationCount = 0;
+  var escalationRecords = [];
+  var mediaCount = 0;
+  var totalMinutes = 0;
+  var durationCount = 0;
+
+  records.forEach(function(r) {
+    categories[r.category] = (categories[r.category] || 0) + 1;
+    if (r.staff) {
+      r.staff.split(',').forEach(function(s) {
+        var name = s.trim();
+        if (name && name !== 'nan') staffCounts[name] = (staffCounts[name] || 0) + 1;
+      });
+    }
+    if (hasEscalation(r)) { escalationCount++; escalationRecords.push(r); }
+    if (hasMediaCapture(r)) mediaCount++;
+    if (r.duration) {
+      var m = parseDuration(r.duration);
+      if (m > 0) { totalMinutes += m; durationCount++; }
+    }
+  });
+
+  var avgDuration = durationCount > 0 ? Math.round(totalMinutes / durationCount) : 0;
+
+  // Summary text
+  var summary = '';
+  if (latest.category && latest.category !== 'その他・一般') {
+    summary = '前回は「' + latest.category + '」で来店';
+  } else if (latest.complaint) {
+    summary = '前回: ' + truncate(latest.complaint, 40);
+  }
+
+  return {
+    userId: userId,
+    records: records,
+    latestRecord: latest,
+    device: latest.device,
+    deviceSimple: latest.deviceSimple,
+    gender: (latest.gender && latest.gender !== 'nan' ? latest.gender : '') || (oldest.gender && oldest.gender !== 'nan' ? oldest.gender : ''),
+    visitCount: records.length,
+    firstVisit: oldest.date,
+    lastVisit: latest.date,
+    categories: categories,
+    escalationCount: escalationCount,
+    escalationRecords: escalationRecords,
+    mediaCount: mediaCount,
+    avgDuration: avgDuration,
+    staffCounts: staffCounts,
+    summary: summary
+  };
+}
+
+function parseDuration(dur) {
+  if (!dur) return 0;
+  var s = String(dur);
+  // "0:37:00" format
+  var match = s.match(/(\d+):(\d+):(\d+)/);
+  if (match) return parseInt(match[1]) * 60 + parseInt(match[2]);
+  // "37分" format
+  match = s.match(/(\d+)\s*分/);
+  if (match) return parseInt(match[1]);
+  // "37" plain number
+  var n = parseInt(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function renderKarte(kd) {
+  var h = '';
+
+  // Back button
+  h += '<button class="k-back" onclick="showKarteInit()">&larr; ユーザー検索に戻る</button>';
+
+  // Highlight panel
+  h += '<div class="k-highlight">';
+  h += '<div class="k-hl-id">' + escHtml(kd.userId) + '</div>';
+  h += '<div class="k-hl-meta">';
+  h += '<span>' + escHtml(kd.deviceSimple || '不明') + (kd.device !== kd.deviceSimple ? ' (' + escHtml(kd.device) + ')' : '') + '</span>';
+  if (kd.gender && kd.gender !== 'nan') h += '<span>' + escHtml(kd.gender) + '</span>';
+  h += '</div>';
+  h += '<div class="k-hl-tags">';
+  h += '<span class="k-hl-tag">🔄 来訪' + kd.visitCount + '回目</span>';
+  h += '<span class="k-hl-tag">初回: ' + formatDate(kd.firstVisit) + '</span>';
+  h += '<span class="k-hl-tag">最終: ' + formatDate(kd.lastVisit) + '</span>';
+  // Category tags (top 3)
+  var catEntries = Object.keys(kd.categories).map(function(k) { return [k, kd.categories[k]]; }).sort(function(a, b) { return b[1] - a[1]; });
+  catEntries.slice(0, 3).forEach(function(e) {
+    h += '<span class="k-hl-tag">' + escHtml(e[0]) + ':' + e[1] + '</span>';
+  });
+  if (kd.escalationCount > 0) {
+    h += '<span class="k-hl-tag esc">⚡エスカレ ' + kd.escalationCount + '件</span>';
+  }
+  h += '</div></div>';
+
+  // Previous visit card (most prominent)
+  var prev = kd.latestRecord;
+  h += '<div class="k-prev">';
+  h += '<div class="k-prev-t">📋 前回の対応</div>';
+  h += '<div class="k-prev-cat">' + formatDate(prev.date) + ' ' + escHtml(prev.category) + '</div>';
+  h += '<div class="k-prev-staff">担当: ' + escHtml(prev.staff || '記録なし') + (prev.duration ? ' | 対応時間: ' + escHtml(prev.duration) : '') + '</div>';
+  var prevText = '';
+  if (prev.complaint) prevText += maskName(prev.complaint);
+  if (prev.response) prevText += '\n→ ' + maskName(prev.response);
+  h += '<div class="k-prev-body">' + escHtml(prevText) + '</div>';
+  if (hasEscalation(prev)) h += '<div style="margin-top:8px"><span class="tg tg-esc">⚡エスカレ</span></div>';
+  if (hasMediaCapture(prev)) h += '<div style="margin-top:4px"><span class="tg tg-media">📸撮影あり</span></div>';
+  h += '</div>';
+
+  // Stats row (2 columns)
+  h += '<div class="k-stats">';
+  // Left: Stats
+  h += '<div class="k-stat-card"><h4>対応統計</h4>';
+  h += '<div class="k-stat-row"><span>平均対応時間</span><span class="k-stat-val">' + (kd.avgDuration > 0 ? kd.avgDuration + '分' : '---') + '</span></div>';
+  h += '<div class="k-stat-row"><span>エスカレ回数</span><span class="k-stat-val">' + kd.escalationCount + '件</span></div>';
+  h += '<div class="k-stat-row"><span>撮影記録</span><span class="k-stat-val">' + kd.mediaCount + '件</span></div>';
+  // Staff breakdown
+  var staffKeys = Object.keys(kd.staffCounts).sort(function(a, b) { return kd.staffCounts[b] - kd.staffCounts[a]; });
+  if (staffKeys.length) {
+    h += '<div class="k-stat-row"><span>担当者</span><span class="k-stat-val">' +
+      staffKeys.map(function(s) { return escHtml(s) + '(' + kd.staffCounts[s] + ')'; }).join(' ') + '</span></div>';
+  }
+  h += '</div>';
+
+  // Right: Category breakdown
+  h += '<div class="k-stat-card"><h4>相談カテゴリ内訳</h4>';
+  var maxCat = catEntries.length > 0 ? catEntries[0][1] : 1;
+  catEntries.forEach(function(e) {
+    var pct = Math.round((e[1] / maxCat) * 100);
+    h += '<div class="k-stat-row"><span style="flex-shrink:0">' + escHtml(e[0]) + '</span>';
+    h += '<div class="k-cat-bar"><div class="k-cat-fill" style="width:' + pct + '%"></div></div>';
+    h += '<span class="k-stat-val">' + e[1] + '件</span></div>';
+  });
+  h += '</div></div>';
+
+  // Timeline
+  h += '<div class="card"><div class="card-t"><span class="ct-ico">📅</span>対応タイムライン</div>';
+  h += '<div class="tl">';
+  kd.records.forEach(function(rec, idx) {
+    var esc = hasEscalation(rec);
+    var media = hasMediaCapture(rec);
+    h += '<div class="tl-item" id="tl-' + idx + '">';
+    h += '<div class="tl-dot' + (esc ? ' esc' : '') + '"></div>';
+    h += '<div class="tl-head" onclick="toggleTl(' + idx + ')">';
+    h += '<span class="tl-arrow">▶</span> ';
+    h += '<span class="tl-date">' + formatDate(rec.date) + '</span> ';
+    h += '<span class="tg tg-ct" style="margin-left:4px">' + escHtml(rec.category) + '</span> ';
+    if (esc) h += '<span class="tg tg-esc" style="margin-left:2px">⚡エスカレ</span> ';
+    if (media) h += '<span class="tg tg-media" style="margin-left:2px">📸</span> ';
+    if (rec.staff) h += '<span style="font-size:.82rem;color:var(--text2);margin-left:auto">担当: ' + escHtml(rec.staff) + '</span>';
+    h += '</div>';
+    h += '<div class="tl-body">';
+    h += '<div class="dl"><div class="dl-l">相談内容</div><div class="dl-v">' + escHtml(maskName(rec.complaint || 'なし')) + '</div></div>';
+    h += '<div class="dl"><div class="dl-l">対応内容</div><div class="dl-v">' + escHtml(maskName(rec.response || 'なし')) + '</div></div>';
+    if (rec.notes && rec.notes !== 'nan' && rec.notes.trim()) {
+      h += '<div class="dl"><div class="dl-l">特記事項</div><div class="dl-v">' + escHtml(maskName(rec.notes)) + '</div></div>';
+    }
+    h += '<div style="margin-top:8px;font-size:.82rem;color:var(--text3)">';
+    h += '時間: ' + escHtml(rec.startTime || '') + ' - ' + escHtml(rec.endTime || '') + (rec.duration ? ' (' + escHtml(rec.duration) + ')' : '');
+    if (rec.location) h += ' | 場所: ' + escHtml(rec.location);
+    h += '</div></div></div>';
+  });
+  h += '</div></div>';
+
+  return h;
+}
+
+function showKarte(userId) {
+  if (!userId) return;
+  var cleanId = userId.replace(/[-\s]/g, '');
+  // Find exact match first, then partial
+  var exactRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '') === cleanId; });
+  var targetId = exactRecs.length > 0 ? exactRecs[0].userId : null;
+
+  if (!targetId) {
+    // Partial match
+    var partialRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '').indexOf(cleanId) !== -1; });
+    if (partialRecs.length > 0) {
+      targetId = partialRecs[0].userId;
+    }
+  }
+
+  if (!targetId) {
+    toast('該当するユーザーが見つかりません', 'i');
+    return;
+  }
+
+  var kd = buildKarte(targetId);
+  if (!kd) {
+    toast('カルテデータを構築できません', 'er');
+    return;
+  }
+
+  STATE.currentKarteId = targetId;
+
+  // Add to history
+  var histIdx = STATE.karteHistory.indexOf(targetId);
+  if (histIdx !== -1) STATE.karteHistory.splice(histIdx, 1);
+  STATE.karteHistory.unshift(targetId);
+  if (STATE.karteHistory.length > 20) STATE.karteHistory.pop();
+  try { localStorage.setItem('karte_history', JSON.stringify(STATE.karteHistory)); } catch(e) {}
+
+  document.getElementById('karteInit').style.display = 'none';
+  document.getElementById('karteView').style.display = 'block';
+  document.getElementById('karteView').innerHTML = renderKarte(kd);
+  window.scrollTo(0, 0);
+}
+
+function showKarteInit() {
+  STATE.currentKarteId = null;
+  document.getElementById('karteView').style.display = 'none';
+  document.getElementById('karteInit').style.display = 'block';
+  document.getElementById('karteId').value = '';
+  renderKarteInit();
+  window.scrollTo(0, 0);
+}
+
+function renderKarteInit() {
+  // Load history
+  try {
+    var saved = localStorage.getItem('karte_history');
+    if (saved) STATE.karteHistory = JSON.parse(saved);
+  } catch(e) { STATE.karteHistory = []; }
+
+  // Recent searches
+  var recentDiv = document.getElementById('karteRecent');
+  if (STATE.karteHistory.length > 0) {
+    var rh = '<div class="card"><div class="card-t"><span class="ct-ico">🕐</span>最近検索したユーザー</div>';
+    STATE.karteHistory.slice(0, 8).forEach(function(uid) {
+      var recs = STATE.data.filter(function(r) { return r.userId === uid; });
+      if (!recs.length) return;
+      var latest = recs.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); })[0];
+      rh += '<div class="rep-item" onclick="showKarte(\'' + escAttr(uid) + '\')">';
+      rh += '<div><div class="rep-id">' + escHtml(uid) + '</div>';
+      rh += '<div class="rep-info">' + escHtml(latest.deviceSimple || '不明') + ' | ' + formatDate(latest.date) + ' | ' + escHtml(latest.category) + '</div></div>';
+      rh += '<span class="rep-count">' + recs.length + '回</span></div>';
+    });
+    rh += '</div>';
+    recentDiv.innerHTML = rh;
+  } else {
+    recentDiv.innerHTML = '';
+  }
+
+  // Repeaters
+  var repDiv = document.getElementById('karteRepeaters');
+  var repeaters = getRepeatUsers();
+  if (repeaters.length > 0) {
+    var rp = '<div class="card"><div class="card-t"><span class="ct-ico">🔄</span>リピーター一覧（' + repeaters.length + '名）</div>';
+    repeaters.slice(0, 15).forEach(function(entry) {
+      var uid = entry[0];
+      var count = entry[1];
+      var recs = STATE.data.filter(function(r) { return r.userId === uid; });
+      var latest = recs.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); })[0];
+      rp += '<div class="rep-item" onclick="showKarte(\'' + escAttr(uid) + '\')">';
+      rp += '<div><div class="rep-id">' + escHtml(uid) + '</div>';
+      rp += '<div class="rep-info">' + escHtml(latest.deviceSimple || '不明') + ' | 最終: ' + formatDate(latest.date) + '</div></div>';
+      rp += '<span class="rep-count">' + count + '回</span></div>';
+    });
+    if (repeaters.length > 15) {
+      rp += '<div style="text-align:center;padding:12px;font-size:.85rem;color:var(--text3)">他 ' + (repeaters.length - 15) + '名</div>';
+    }
+    rp += '</div>';
+    repDiv.innerHTML = rp;
+  } else {
+    repDiv.innerHTML = '';
+  }
+}
+
+function toggleTl(idx) {
+  var el = document.getElementById('tl-' + idx);
+  if (el) el.classList.toggle('open');
+}
+
+// ===== LOGIN =====
+var passcodeInput = '';
+
+function nd(digit) {
+  if (passcodeInput.length >= 4) return;
+  passcodeInput += digit;
+  updateDots();
+  if (passcodeInput.length === 4) setTimeout(checkPasscode, 200);
+}
+
+function ndel() {
+  passcodeInput = passcodeInput.slice(0, -1);
+  updateDots();
+  document.getElementById('lerr').textContent = '';
+}
+
+function updateDots() {
+  for (var i = 0; i < 4; i++) {
+    var dot = document.getElementById('d' + i);
+    dot.classList.toggle('on', i < passcodeInput.length);
+    dot.classList.remove('err');
+  }
+}
+
+function checkPasscode() {
+  if (passcodeInput === CONFIG.passcode) {
+    sessionStorage.setItem(CONFIG.sessionKey, '1');
+    showApp();
+  } else {
+    for (var i = 0; i < 4; i++) document.getElementById('d' + i).classList.add('err');
+    document.getElementById('lerr').textContent = 'パスコードが違います';
+    setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
+  }
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadData();
+  refreshAll();
+  // 鍵導出してサーバーからデータ取得
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    deriveKey(CONFIG.passcode).then(function(key) {
+      STATE.cryptoKey = key;
+      fetchLatestData();
+    }).catch(function() {
+      // crypto非対応環境ではlocalStorageのみで動作
+    });
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem(CONFIG.sessionKey);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  passcodeInput = '';
+  updateDots();
+  document.getElementById('lerr').textContent = '';
+}
+
+// ===== FILE OPERATIONS =====
+function importCSV(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var records = csvToRecords(e.target.result);
+      if (!records.length) { toast('有効なレコードが見つかりません', 'er'); return; }
+      var result = mergeData(records);
+      toast(result.added + '件追加（' + result.skipped + '件はスキップ）合計' + STATE.data.length + '件', 'ok');
+      refreshAll();
+    } catch (err) {
+      toast('読み込みに失敗しました: ' + err.message, 'er');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  input.value = '';
+}
+
+function exportCSV() {
+  if (!STATE.data.length) { toast('データがありません', 'er'); return; }
+  var headers = ['No','日付','開始時間','終了時間','対応時間','UserID','機種','性別','相談内容','対応内容','特記事項','担当','場所','インポート日'];
+  var esc = function(s) { return '"' + (s || '').replace(/"/g, '""') + '"'; };
+  var lines = [headers.join(',')];
+  for (var i = 0; i < STATE.data.length; i++) {
+    var r = STATE.data[i];
+    lines.push([
+      esc(r.no), esc(r.date), esc(r.startTime), esc(r.endTime), esc(r.duration),
+      esc(r.userId), esc(r.device), esc(r.gender),
+      esc(r.complaint), esc(r.response), esc(r.notes),
+      esc(r.staff), esc(r.location), esc(r.importDate)
+    ].join(','));
+  }
+  var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'taimen_backup_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('エクスポートが完了しました', 'ok');
+}
+
+function nukeData() {
+  if (!confirm('すべてのデータを削除しますか？\nこの操作は元に戻せません。')) return;
+  if (!confirm('本当に削除してよろしいですか？\n（最終確認）')) return;
+  STATE.data = [];
+  localStorage.removeItem(CONFIG.storageKey);
+  refreshAll();
+  toast('すべてのデータを削除しました', 'i');
+}
+
+// ===== SEARCH =====
+function setSearchMode(mode) {
+  STATE.searchMode = mode;
+  var stabs = document.getElementById('searchStabs').querySelectorAll('.stab');
+  var modes = ['uid', 'dev', 'kw'];
+  for (var i = 0; i < stabs.length; i++) {
+    stabs[i].classList.toggle('on', modes[i] === mode);
+  }
+  modes.forEach(function(m) {
+    document.getElementById('m-' + m).style.display = m === mode ? 'block' : 'none';
+  });
+  clearResults();
+}
+
+function doSearch() {
+  var mode = STATE.searchMode;
+  if (mode === 'uid') {
+    var val = (document.getElementById('si-uid').value || '').trim().replace(/[-\s]/g, '');
+    if (!val) { toast('ユーザーIDを入力してください', 'i'); return; }
+    STATE.results = STATE.data.filter(function(r) {
+      return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1;
+    });
+  } else if (mode === 'dev') {
+    var val2 = (document.getElementById('si-dev').value || '').trim().toLowerCase();
+    if (!val2) { toast('機種名を入力してください', 'i'); return; }
+    STATE.results = STATE.data.filter(function(r) {
+      return (r.device || '').toLowerCase().indexOf(val2) !== -1 ||
+        (r.deviceSimple || '').toLowerCase().indexOf(val2) !== -1;
+    });
+    renderDeviceSummary(val2);
+  } else {
+    var val3 = (document.getElementById('si-kw').value || '').trim();
+    var catFilter = document.getElementById('fc').value;
+    var staffFilter = document.getElementById('fs').value;
+    var periodFilter = document.getElementById('fp').value;
+    var escFilter = document.getElementById('fe').value;
+    if (!val3 && !catFilter && !staffFilter && !periodFilter && !escFilter) {
+      toast('検索条件を入力してください', 'i'); return;
+    }
+    var keywords = val3 ? val3.split(/\s+/).filter(Boolean) : [];
+    STATE.results = STATE.data.filter(function(r) {
+      if (keywords.length) {
+        var searchText = (r.complaint + ' ' + r.response + ' ' + r.notes + ' ' + r.device).toLowerCase();
+        for (var k = 0; k < keywords.length; k++) {
+          if (searchText.indexOf(keywords[k].toLowerCase()) === -1) return false;
+        }
+      }
+      if (catFilter && r.category !== catFilter) return false;
+      if (staffFilter && r.staff.indexOf(staffFilter) === -1) return false;
+      if (periodFilter) {
+        var rd = r.date;
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = String(now.getMonth() + 1).padStart(2, '0');
+        if (periodFilter === 'week') {
+          var dayOfWeek = now.getDay() || 7;
+          var sw = new Date(now);
+          sw.setDate(now.getDate() - dayOfWeek + 1);
+          var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
+          if (rd < startWeek) return false;
+        } else if (periodFilter === 'last') {
+          var slm = new Date(y, now.getMonth() - 1, 1);
+          var elm = new Date(y, now.getMonth(), 0);
+          var startLast = slm.getFullYear() + '-' + String(slm.getMonth() + 1).padStart(2, '0') + '-01';
+          var endLast = elm.getFullYear() + '-' + String(elm.getMonth() + 1).padStart(2, '0') + '-' + String(elm.getDate()).padStart(2, '0');
+          if (rd < startLast || rd > endLast) return false;
+        } else if (periodFilter === 'year') {
+          if (rd.indexOf(String(y)) !== 0) return false;
+        } else {
+          var months = parseInt(periodFilter);
+          if (months === 1) {
+            var startMonth = y + '-' + m + '-01';
+            if (rd < startMonth) return false;
+          } else {
+            var sm = new Date(now);
+            sm.setMonth(sm.getMonth() - months);
+            var startStr = sm.getFullYear() + '-' + String(sm.getMonth() + 1).padStart(2, '0') + '-' + String(sm.getDate()).padStart(2, '0');
+            if (rd < startStr) return false;
+          }
+        }
+      }
+      if (escFilter === 'yes' && !hasEscalation(r)) return false;
+      if (escFilter === 'no' && hasEscalation(r)) return false;
+      return true;
+    });
+  }
+  STATE.results.sort(function(a, b) {
+    return (b.date || '').localeCompare(a.date || '') || (b.startTime || '').localeCompare(a.startTime || '');
+  });
+  STATE.displayCount = CONFIG.pageSize;
+  renderResults();
+}
+
+function quickSearch() {
+  var val = (document.getElementById('qi').value || '').trim().replace(/[-\s]/g, '');
+  if (!val) return;
+  var results = STATE.data
+    .filter(function(r) { return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1; })
+    .sort(function(a, b) { return (b.date || '').localeCompare(a.date || '') || (b.startTime || '').localeCompare(a.startTime || ''); });
+  var box = document.getElementById('qr');
+  if (!results.length) {
+    box.innerHTML = '<p style="color:var(--text3);font-size:.88rem;padding:8px 0">該当するレコードがありません</p>';
+    return;
+  }
+  var uid = results[0].userId;
+  var repeatCount = results.length;
+  var html = '';
+  if (repeatCount > 1) {
+    html += '<div class="rep-banner">🔄 このユーザーは<b> ' + repeatCount + '回目 </b>のご来店です（初回: ' + formatDate(results[results.length - 1].date) + '）</div>';
+  }
+  html += '<p style="font-size:.88rem;color:var(--text2);margin-bottom:10px"><b>' + results.length + '件</b>の対応履歴</p>';
+  results.slice(0, 5).forEach(function(r) { html += renderRecordCard(r); });
+  html += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center">';
+  if (results.length > 5) {
+    html += '<button class="btn btn-sm btn-g" onclick="goToFullSearch(\'' + escAttr(val) + '\')">全' + results.length + '件を表示</button>';
+  }
+  html += '<button class="btn btn-sm btn-p" onclick="openKarteFromHome(\'' + escAttr(uid) + '\')">カルテを見る</button>';
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+function openKarteFromHome(uid) {
+  go('karte');
+  showKarte(uid);
+}
+
+function goToFullSearch(uid) {
+  go('search');
+  setSearchMode('uid');
+  document.getElementById('si-uid').value = uid;
+  doSearch();
+}
+
+function searchByCategory(category) {
+  go('search');
+  setSearchMode('kw');
+  document.getElementById('si-kw').value = '';
+  document.getElementById('fc').value = category;
+  document.getElementById('fs').value = '';
+  document.getElementById('fp').value = '';
+  document.getElementById('fe').value = '';
+  STATE.results = STATE.data.filter(function(r) { return r.category === category; })
+    .sort(function(a, b) { return (b.date || '').localeCompare(a.date || '') || (b.startTime || '').localeCompare(a.startTime || ''); });
+  STATE.displayCount = CONFIG.pageSize;
+  renderResults();
+}
+
+function searchByPeriod(period) {
+  go('search');
+  setSearchMode('kw');
+  document.getElementById('si-kw').value = '';
+  document.getElementById('fc').value = '';
+  document.getElementById('fs').value = '';
+  document.getElementById('fp').value = period;
+  document.getElementById('fe').value = '';
+  doSearch();
+}
+
+function searchByEscalation() {
+  go('search');
+  setSearchMode('kw');
+  document.getElementById('si-kw').value = '';
+  document.getElementById('fc').value = '';
+  document.getElementById('fs').value = '';
+  document.getElementById('fp').value = '';
+  document.getElementById('fe').value = 'yes';
+  doSearch();
+}
+
+function clearResults() {
+  STATE.results = [];
+  document.getElementById('sr').innerHTML = '';
+  document.getElementById('ri').style.display = 'none';
+  document.getElementById('se').style.display = 'block';
+  document.getElementById('smore').style.display = 'none';
+  document.getElementById('devSummary').innerHTML = '';
+}
+
+function showMore() {
+  STATE.displayCount += 50;
+  renderResults();
+}
+
+// ===== RENDER =====
+function renderRecordCard(rec) {
+  var idx = STATE.data.indexOf(rec);
+  var date = formatDate(rec.date);
+  var esc = hasEscalation(rec);
+  var media = hasMediaCapture(rec);
+  var repeat = getRepeatCount(rec.userId);
+  var summary = maskName(truncate(rec.complaint, 80));
+
+  return '<div class="rc" id="r' + idx + '">' +
+    '<div class="rc-h" onclick="toggleCard(' + idx + ')">' +
+    '<span class="rc-arrow">▶</span>' +
+    '<div class="rc-meta">' +
+    '<span class="tg tg-dt">' + date + '</span>' +
+    '<span class="tg tg-id">' + escHtml(rec.userId || '---') + '</span>' +
+    '<span class="tg tg-dv">' + escHtml(rec.deviceSimple || '不明') + '</span>' +
+    '<span class="tg tg-ct">' + escHtml(rec.category) + '</span>' +
+    (rec.staff ? '<span class="tg tg-st">' + escHtml(rec.staff) + '</span>' : '') +
+    (esc ? '<span class="tg tg-esc">⚡エスカレ</span>' : '') +
+    (media ? '<span class="tg tg-media">📸撮影あり</span>' : '') +
+    (repeat > 1 ? '<span class="tg tg-rep">🔄' + repeat + '回目</span>' : '') +
+    '</div>' +
+    '<div class="rc-sum">' + escHtml(summary) + '</div>' +
+    '</div>' +
+    '<div class="rc-b">' +
+    '<div class="dl"><div class="dl-l">相談内容</div><div class="dl-v">' + escHtml(maskName(rec.complaint || 'なし')) + '</div></div>' +
+    '<div class="dl"><div class="dl-l">対応内容</div><div class="dl-v">' + escHtml(maskName(rec.response || 'なし')) + '</div></div>' +
+    (rec.notes && rec.notes !== 'nan' && rec.notes.trim() ?
+      '<div class="dl"><div class="dl-l">特記事項</div><div class="dl-v">' + escHtml(maskName(rec.notes)) + '</div></div>' : '') +
+    '<div style="margin-top:14px;display:flex;gap:8px">' +
+    '<button class="btn btn-sm btn-p" onclick="openModal(' + idx + ')">詳細を見る</button>' +
+    (rec.userId && rec.userId !== '---' ?
+      '<button class="btn btn-sm btn-g" onclick="openKarteFromHome(\'' + escAttr(rec.userId) + '\')">カルテを見る</button>' : '') +
+    '</div></div></div>';
+}
+
+function renderResults() {
+  var srDiv = document.getElementById('sr');
+  var riDiv = document.getElementById('ri');
+  var seDiv = document.getElementById('se');
+  var moreDiv = document.getElementById('smore');
+  if (!STATE.results.length) {
+    srDiv.innerHTML = '<div class="empty-state"><div class="empty-i">😞</div><p class="empty-t">該当するレコードがありません</p></div>';
+    riDiv.style.display = 'none';
+    seDiv.style.display = 'none';
+    moreDiv.style.display = 'none';
+    return;
+  }
+  seDiv.style.display = 'none';
+  riDiv.style.display = 'flex';
+  document.getElementById('rn').textContent = STATE.results.length;
+  var repBanner = '';
+  if (STATE.searchMode === 'uid' && STATE.results.length > 1) {
+    var uid = STATE.results[0].userId;
+    if (uid && uid !== '未確認') {
+      repBanner = '<div class="rep-banner">🔄 このユーザーは<b> ' + STATE.results.length + '回 </b>ご来店されています' +
+        '（初回: ' + formatDate(STATE.results[STATE.results.length - 1].date) + '）' +
+        ' <button class="btn btn-sm btn-p" style="margin-left:10px" onclick="openKarteFromHome(\'' + escAttr(uid) + '\')">カルテを見る</button>' +
+        '</div>';
+    }
+  }
+  var html = repBanner + '<div class="r2c">';
+  STATE.results.slice(0, STATE.displayCount).forEach(function(r) { html += renderRecordCard(r); });
+  html += '</div>';
+  srDiv.innerHTML = html;
+  moreDiv.style.display = STATE.results.length > STATE.displayCount ? 'block' : 'none';
+}
+
+function renderDeviceSummary(query) {
+  var box = document.getElementById('devSummary');
+  if (!STATE.results.length) { box.innerHTML = ''; return; }
+  var byDevice = {};
+  STATE.results.forEach(function(r) {
+    var key = r.deviceSimple || '不明';
+    if (!byDevice[key]) byDevice[key] = { count: 0 };
+    byDevice[key].count++;
+  });
+  var html = '<div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:.85rem">';
+  html += '<b>機種分布:</b> ';
+  Object.keys(byDevice).sort(function(a, b) { return byDevice[b].count - byDevice[a].count; }).forEach(function(dev) {
+    html += '<span class="tg tg-dv" style="margin:2px">' + escHtml(dev) + ' ' + byDevice[dev].count + '件</span> ';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+function renderHome() {
+  var hasData = STATE.data.length > 0;
+  document.getElementById('nodata').style.display = hasData ? 'none' : 'block';
+  document.getElementById('hasdata').style.display = hasData ? 'block' : 'none';
+  if (!hasData) return;
+
+  var now = new Date();
+  var thisMonth = STATE.data.filter(function(r) {
+    var d = new Date(r.date);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+
+  var catCounts = {};
+  STATE.data.forEach(function(r) { catCounts[r.category] = (catCounts[r.category] || 0) + 1; });
+
+  var uniqueIds = {};
+  STATE.data.forEach(function(r) { if (isValidUserId(r.userId)) uniqueIds[r.userId] = true; });
+  var uniqueUsers = Object.keys(uniqueIds).length;
+
+  var escCount = STATE.data.filter(hasEscalation).length;
+
+  document.getElementById('stats').innerHTML =
+    '<div class="st" onclick="go(\'search\')"><div class="st-v">' + STATE.data.length + '</div><div class="st-l">全レコード</div></div>' +
+    '<div class="st" onclick="searchByPeriod(\'1\')"><div class="st-v">' + thisMonth.length + '</div><div class="st-l">今月の対応</div></div>' +
+    '<div class="st"><div class="st-v">' + uniqueUsers + '</div><div class="st-l">ユニークユーザー</div></div>' +
+    '<div class="st" onclick="searchByEscalation()"><div class="st-v">' + escCount + '</div><div class="st-l">エスカレ件数</div></div>';
+
+  var topCats = Object.keys(catCounts)
+    .filter(function(k) { return k !== 'その他・一般'; })
+    .map(function(k) { return [k, catCounts[k]]; })
+    .sort(function(a, b) { return b[1] - a[1]; })
+    .slice(0, 8);
+
+  document.getElementById('qgrid').innerHTML = topCats.map(function(e) {
+    return '<button class="qbtn" onclick="searchByCategory(\'' + escAttr(e[0]) + '\')">' +
+      escHtml(e[0]) + '<b>' + e[1] + '</b></button>';
+  }).join('');
+
+  document.getElementById('recent').innerHTML = STATE.data.slice(0, 5).map(function(r) {
+    var idx = STATE.data.indexOf(r);
+    var esc = hasEscalation(r);
+    var media = hasMediaCapture(r);
+    var repeat = getRepeatCount(r.userId);
+    return '<div class="rec" onclick="openModal(' + idx + ')">' +
+      '<div class="rc-meta">' +
+      '<span class="tg tg-dt">' + formatDate(r.date) + '</span>' +
+      '<span class="tg tg-ct">' + escHtml(r.category) + '</span>' +
+      '<span class="tg tg-id">' + escHtml(r.userId || '') + '</span>' +
+      (esc ? '<span class="tg tg-esc">⚡エスカレ</span>' : '') +
+      (media ? '<span class="tg tg-media">📸</span>' : '') +
+      (repeat > 1 ? '<span class="tg tg-rep">🔄' + repeat + '回</span>' : '') +
+      '</div>' +
+      '<div style="font-size:.88rem;color:var(--text2);margin-top:4px;line-height:1.5">' + escHtml(maskName(truncate(r.complaint, 60))) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderSettings() {
+  document.getElementById('im').textContent = '現在: ' + STATE.data.length + '件のレコード';
+  var raw = localStorage.getItem(CONFIG.storageKey) || '';
+  var used = new Blob([raw]).size;
+  var max = 5 * 1024 * 1024;
+  var pct = ((used / max) * 100).toFixed(1);
+  document.getElementById('sto').textContent =
+    '使用量: ' + (used / 1024).toFixed(0) + 'KB / ' + (max / 1024).toFixed(0) + 'KB (' + pct + '%)';
+  document.getElementById('sbf').style.width = Math.min(parseFloat(pct), 100) + '%';
+  // 同期情報
+  var lastSync = localStorage.getItem(CONFIG.syncKey);
+  var syncInfo = document.getElementById('syncInfo');
+  if (syncInfo) {
+    syncInfo.textContent = lastSync ? '最終同期: ' + formatSyncTime(lastSync) : '未同期（サーバーからデータ未取得）';
+  }
+}
+
+// ===== UI NAVIGATION =====
+function go(tab) {
+  document.querySelectorAll('.pnl').forEach(function(p) { p.classList.remove('on'); });
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.remove('on');
+    tabs[i].setAttribute('aria-selected', 'false');
+  }
+  document.getElementById('p-' + tab).classList.add('on');
+  var tabIndex = { home: 0, karte: 1, search: 2, settings: 3 };
+  if (tabIndex[tab] !== undefined) {
+    tabs[tabIndex[tab]].classList.add('on');
+    tabs[tabIndex[tab]].setAttribute('aria-selected', 'true');
+  }
+  if (tab === 'home') renderHome();
+  if (tab === 'karte') {
+    if (!STATE.currentKarteId) {
+      renderKarteInit();
+      setTimeout(function() { var el = document.getElementById('karteId'); if (el) el.focus(); }, 100);
+    }
+  }
+  if (tab === 'settings') renderSettings();
+  window.scrollTo(0, 0);
+}
+
+function toggleCard(idx) {
+  var el = document.getElementById('r' + idx);
+  if (el) el.classList.toggle('exp');
+}
+
+function openModal(idx) {
+  var rec = STATE.data[idx];
+  if (!rec) return;
+  var repeat = getRepeatCount(rec.userId);
+  var esc = hasEscalation(rec);
+  var media = hasMediaCapture(rec);
+  document.getElementById('moTitle').textContent = '対応詳細';
+  var html = '';
+  if (repeat > 1) {
+    html += '<div class="rep-banner" style="margin-bottom:18px">🔄 このユーザーは<b> ' + repeat + '回目 </b>のご来店です</div>';
+  }
+  html += '<div class="mo-sec"><div class="mo-sec-t">基本情報</div>';
+  var basicFields = [
+    ['日付', formatDateWithRelative(rec.date)],
+    ['時間', (rec.startTime || '') + ' - ' + (rec.endTime || '') + (rec.duration ? ' (' + rec.duration + ')' : '')],
+    ['ユーザーID', rec.userId || '不明'],
+    ['機種', rec.device || '不明'],
+    ['機種（分類）', rec.deviceSimple || '不明'],
+    ['性別', (rec.gender && rec.gender !== 'nan') ? rec.gender : ''],
+    ['カテゴリ', rec.category || '']
+  ];
+  basicFields.forEach(function(f) {
+    if (f[1]) html += '<div class="mo-f"><div class="mo-fl">' + f[0] + '</div><div class="mo-fv">' + escHtml(f[1]) + '</div></div>';
+  });
+  html += '</div>';
+  html += '<div class="mo-sec"><div class="mo-sec-t">対応状況</div>';
+  var statusFields = [
+    ['担当', rec.staff || '記録なし'],
+    ['場所', rec.location || ''],
+    ['エスカレーション', esc ? '⚡ あり（遠山）' : 'なし'],
+    ['撮影記録', media ? '📸 あり' : 'なし']
+  ];
+  statusFields.forEach(function(f) {
+    if (f[1]) html += '<div class="mo-f"><div class="mo-fl">' + f[0] + '</div><div class="mo-fv">' + escHtml(f[1]) + '</div></div>';
+  });
+  html += '</div>';
+  html += '<div class="mo-sec"><div class="mo-sec-t">相談・対応内容</div>';
+  html += '<div class="mo-f"><div class="mo-fl">相談内容</div><div class="mo-fv">' + escHtml(maskName(rec.complaint || 'なし')) + '</div></div>';
+  html += '<div class="mo-f"><div class="mo-fl">対応内容</div><div class="mo-fv">' + escHtml(maskName(rec.response || 'なし')) + '</div></div>';
+  if (rec.notes && rec.notes !== 'nan' && rec.notes.trim()) {
+    html += '<div class="mo-f"><div class="mo-fl">特記事項</div><div class="mo-fv">' + escHtml(maskName(rec.notes)) + '</div></div>';
+  }
+  html += '</div>';
+  if (rec.userId && isValidUserId(rec.userId)) {
+    html += '<div style="margin-top:16px;text-align:center"><button class="btn btn-p" onclick="closeModal();openKarteFromHome(\'' + escAttr(rec.userId) + '\')">このユーザーのカルテを見る</button></div>';
+  }
+  document.getElementById('mob').innerHTML = html;
+  document.getElementById('mo').classList.add('on');
+}
+
+function closeModal() {
+  document.getElementById('mo').classList.remove('on');
+}
+
+// ===== POPULATE FILTERS =====
+function populateFilters() {
+  var cats = [];
+  var catSet = {};
+  STATE.data.forEach(function(r) {
+    if (!catSet[r.category]) { catSet[r.category] = true; cats.push(r.category); }
+  });
+  cats.sort();
+  document.getElementById('fc').innerHTML =
+    '<option value="">カテゴリ：全て</option>' +
+    cats.map(function(c) { return '<option value="' + escHtml(c) + '">' + escHtml(c) + '</option>'; }).join('');
+
+  var staffSet = {};
+  STATE.data.forEach(function(r) {
+    if (r.staff) {
+      r.staff.split(',').forEach(function(s) {
+        var trimmed = s.trim();
+        if (trimmed && trimmed !== 'nan') staffSet[trimmed] = true;
+      });
+    }
+  });
+  var staffList = Object.keys(staffSet).sort();
+  document.getElementById('fs').innerHTML =
+    '<option value="">担当：全て</option>' +
+    staffList.map(function(s) { return '<option value="' + escHtml(s) + '">' + escHtml(s) + '</option>'; }).join('');
+}
+
+// ===== UTILITY =====
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    var parts = d.split('-');
+    if (parts.length !== 3) return d;
+    return parts[0] + '/' + parts[1] + '/' + parts[2];
+  } catch (e) { return d; }
+}
+
+function relativeDate(d) {
+  if (!d) return '';
+  var parts = d.split('-');
+  if (parts.length !== 3) return '';
+  var then = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var now = new Date();
+  now.setHours(0, 0, 0, 0);
+  var diffDays = Math.floor((now - then) / 86400000);
+  if (diffDays < 0) return '';
+  if (diffDays === 0) return '今日';
+  if (diffDays === 1) return '昨日';
+  if (diffDays < 7) return diffDays + '日前';
+  if (diffDays < 30) return Math.floor(diffDays / 7) + '週間前';
+  if (diffDays < 365) return Math.floor(diffDays / 30) + 'ヶ月前';
+  return Math.floor(diffDays / 365) + '年前';
+}
+
+function formatDateWithRelative(d) {
+  var abs = formatDate(d);
+  var rel = relativeDate(d);
+  if (!rel || rel === '今日') return abs;
+  return abs + '（' + rel + '）';
+}
+
+function truncate(s, n) {
+  if (!s || s === 'nan') return '';
+  s = s.replace(/\n/g, ' ').trim();
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escAttr(s) {
+  if (!s) return '';
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function dismissPwaBanner() {
+  var b = document.getElementById('pwaBanner');
+  if (b) b.style.display = 'none';
+  localStorage.setItem('pwa_banner_dismissed', '1');
+}
+
+function toast(message, type) {
+  var el = document.getElementById('tt');
+  el.textContent = message;
+  el.className = 'toast v ' + (type || 'i');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(function() { el.className = 'toast'; }, 3500);
+}
+
+function refreshAll() {
+  document.getElementById('hCount').textContent = STATE.data.length + '件';
+  populateFilters();
+  renderHome();
+  renderSettings();
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', function() {
+  if (sessionStorage.getItem(CONFIG.sessionKey) === '1') showApp();
+
+  // Enter key handlers
+  ['qi', 'si-uid', 'si-dev', 'si-kw'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          if (id === 'qi') quickSearch();
+          else doSearch();
+        }
+      });
+    }
+  });
+
+  // Karte ID enter key
+  var karteIdEl = document.getElementById('karteId');
+  if (karteIdEl) {
+    karteIdEl.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        var v = karteIdEl.value.trim();
+        if (v) showKarte(v);
+      }
+    });
+  }
+
+  // Modal backdrop close
+  document.getElementById('mo').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // PWA install banner
+  if (!window.navigator.standalone && /iPad|iPhone/.test(navigator.userAgent)) {
+    if (!localStorage.getItem('pwa_banner_dismissed')) {
+      var b = document.getElementById('pwaBanner');
+      if (b) b.style.display = 'flex';
+    }
+  }
+
+  // Prevent zoom on double tap
+  var lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    var now = Date.now();
+    if (now - lastTap < 300) {
+      if (!e.target.closest('input, textarea, select, .mo-fv, .dl-v, .rc-sum, .rep-banner, .tl-body, .k-prev-body')) {
+        e.preventDefault();
+      }
+    }
+    lastTap = now;
+  }, { passive: false });
+});
+</script>
+</body>
+</html>
