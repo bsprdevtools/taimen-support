@@ -668,7 +668,6 @@ body{
     <h1><span data-icon="clipboard-list" data-icon-size="20"></span>対面サポート支援</h1>
     <div class="header-r">
       <span class="header-count" id="hCount">0件</span>
-      <span class="header-count" id="syncStatus" style="font-size:.7rem;opacity:.8">---</span>
       <button class="h-btn" onclick="logout()">ログアウト</button>
     </div>
   </div>
@@ -685,8 +684,7 @@ body{
   <div class="pnl on" id="p-home">
     <div id="nodata" class="empty-state">
       <div class="empty-i" data-icon="clipboard-list" data-icon-size="48"></div>
-      <p class="empty-t">データがまだありません<br>設定タブからCSVをインポートしてください</p>
-      <button class="btn btn-p" style="margin-top:16px" onclick="go('settings')">CSVインポートへ</button>
+      <p class="empty-t">データを読み込んでいます…</p>
     </div>
     <div id="hasdata" style="display:none">
       <div class="pwa-banner" id="pwaBanner" style="display:none">
@@ -783,12 +781,9 @@ body{
           <select class="fsel" id="fs"><option value="">担当：全て</option></select>
           <select class="fsel" id="fp">
             <option value="">期間：全て</option>
+            <option value="latest">今回</option>
             <option value="week">今週</option>
             <option value="1">今月</option>
-            <option value="last">先月</option>
-            <option value="3">過去3ヶ月</option>
-            <option value="6">過去6ヶ月</option>
-            <option value="year">今年</option>
             <option value="custom">日付を指定</option>
           </select>
           <select class="fsel" id="fe">
@@ -833,32 +828,9 @@ body{
       データの長期保持にも効果的です。
     </div>
     <div class="scard">
-      <div class="scard-t">データ同期</div>
-      <div class="scard-d">サーバーから最新データを取得します。通常はページ読み込み時に自動同期されます。</div>
-      <button class="btn btn-p btn-bl" onclick="fetchLatestData()">今すぐ同期</button>
-      <div class="scard-m" id="syncInfo">最終同期: ---</div>
-    </div>
-    <div class="scard">
-      <div class="scard-t">CSVインポート（手動）</div>
-      <div class="scard-d">ネットワーク接続がない場合やCSVファイルを直接読み込みたい場合に使用します。</div>
-      <input type="file" id="cf" accept=".csv" style="display:none" onchange="importCSV(this)">
-      <button class="btn btn-p btn-bl" onclick="document.getElementById('cf').click()">CSVファイルを選択</button>
+      <div class="scard-t">データについて</div>
+      <div class="scard-d">ログイン時にサーバーから最新データを自動取得します。<br>データ更新は <code>update_taimen.py</code> で実施してください。</div>
       <div class="scard-m" id="im">現在: 0件</div>
-    </div>
-    <div class="scard">
-      <div class="scard-t">CSVエクスポート</div>
-      <div class="scard-d">バックアップ用にCSVファイルをダウンロードします。定期的な保存を推奨します。</div>
-      <button class="btn btn-ok btn-bl" onclick="exportCSV()">CSVをエクスポート</button>
-    </div>
-    <div class="scard">
-      <div class="scard-t">ストレージ使用量</div>
-      <div class="scard-m" id="sto">計算中...</div>
-      <div class="sbar"><div class="sbar-f" id="sbf" style="width:0%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="scard-t" style="color:var(--red);display:flex;align-items:center;gap:6px"><span data-icon="alert-triangle" data-icon-size="18"></span>データ削除</div>
-      <div class="scard-d">すべてのデータを削除します。この操作は元に戻せません。</div>
-      <button class="btn btn-d btn-bl" onclick="nukeData()">すべて削除</button>
     </div>
     <div style="text-align:center;color:var(--text3);font-size:.75rem;margin-top:24px;line-height:1.8">
       対面サポート支援システム v4.0<br>
@@ -890,12 +862,10 @@ var CONFIG = {
   passcodeLength: 6,
   verifyData: 'omwlxAe5TKyNT0V74Sk911ComHuw8Gk2Td1r5bk5ISOOg6xdBMShAAiyRZpnpjWLsVsjl+sE',
   verifyPlaintext: 'TAIMEN_SUPPORT_VERIFIED_OK',
-  storageKey: 'taimen_v3',
   sessionKey: 'taimen_session',
   passcodeKey: 'taimen_pc',
   pageSize: 50,
   dataUrl: 'data.enc',
-  syncKey: 'taimen_last_sync',
   pbkdf2Salt: 'taimen_support_v4_salt_2026',
   pbkdf2Iterations: 100000,
   karteHistoryMax: 20,
@@ -905,8 +875,7 @@ var CONFIG = {
   topCategoryDisplay: 8,
   weeklySummaryWeeks: 8,
   toastDuration: 3500,
-  similarCasesMax: 3,
-  storageLimitBytes: 5 * 1024 * 1024
+  similarCasesMax: 3
 };
 
 // ===== SF Symbols風 ICONS (inline SVG) =====
@@ -1270,74 +1239,7 @@ function csvToRecords(csvText) {
 }
 
 // ===== DATA MANAGEMENT =====
-function loadData() {
-  try {
-    var raw = localStorage.getItem(CONFIG.storageKey);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      STATE.data = parsed.records || [];
-    }
-  } catch (e) {
-    STATE.data = [];
-    console.error('loadData error:', e);
-    toast('データの読み込みに失敗しました', 'er');
-  }
-  buildUserIndex();
-}
-
-function saveData() {
-  try {
-    var payload = JSON.stringify({
-      version: 4,
-      timestamp: new Date().toISOString(),
-      count: STATE.data.length,
-      records: STATE.data
-    });
-    localStorage.setItem(CONFIG.storageKey, payload);
-    // Check storage usage
-    try {
-      var used = new Blob([payload]).size;
-      if (used > CONFIG.storageLimitBytes * 0.8) {
-        toast('ストレージ使用量が80%を超えています。設定画面でエクスポートをお勧めします', 'er');
-      }
-    } catch (e2) { /* Blob size check failed, skip warning */ }
-  } catch (e) {
-    console.error('saveData error:', e);
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
-      toast('ストレージ容量不足です。設定画面でデータをエクスポートしてください', 'er');
-    } else {
-      toast('データの保存に失敗しました', 'er');
-    }
-  }
-}
-
-function mergeData(newRecords) {
-  // 新規レコードから「場所+日付」の組み合わせを抽出
-  var newSlots = {};
-  for (var i = 0; i < newRecords.length; i++) {
-    var r = newRecords[i];
-    var slot = (r.location || '') + '|' + r.date;
-    newSlots[slot] = true;
-  }
-  // 該当する場所+日付の既存データを除去（上書き準備）
-  var removed = 0;
-  var kept = [];
-  for (var j = 0; j < STATE.data.length; j++) {
-    var d = STATE.data[j];
-    var dSlot = (d.location || '') + '|' + d.date;
-    if (newSlots[dSlot]) {
-      removed++;
-    } else {
-      kept.push(d);
-    }
-  }
-  // 新規レコードを追加
-  STATE.data = kept.concat(newRecords);
-  STATE.data.sort(compareByDateDesc);
-  saveData();
-  buildUserIndex();
-  return { added: newRecords.length, removed: removed };
-}
+// サーバーから毎回最新データを取得する方式（localStorageキャッシュなし）
 
 // ===== CRYPTO: PBKDF2 + AES-GCM =====
 function deriveKey(passcode) {
@@ -1373,8 +1275,8 @@ function decryptData(key, b64Data) {
 
 function fetchLatestData() {
   if (!STATE.cryptoKey) return;
-  var syncIndicator = document.getElementById('syncStatus');
-  if (syncIndicator) syncIndicator.textContent = '同期中...';
+  var hCount = document.getElementById('hCount');
+  if (hCount) hCount.textContent = '読込中...';
 
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
@@ -1390,28 +1292,12 @@ function fetchLatestData() {
     })
     .then(function(csvText) {
       var records = csvToRecords(csvText);
-      if (!records.length) { toast('復号成功、有効レコードなし', 'i'); return; }
-      var before = STATE.data.length;
-      var result = mergeData(records);
-      var now = new Date().toISOString();
-      localStorage.setItem(CONFIG.syncKey, now);
-      if (syncIndicator) syncIndicator.textContent = '最終同期: ' + formatSyncTime(now);
-      if (result.added > 0) {
-        var msg = result.added + '件を反映';
-        if (result.removed > 0) msg += '（' + result.removed + '件を上書き更新）';
-        msg += '　合計' + STATE.data.length + '件';
-        toast(msg, 'ok');
-        refreshAll();
-        // Re-run active search if results are displayed
-        if (STATE.results && STATE.results.length > 0) { try { doSearch(); } catch(e) {} }
-      } else if (before === 0) {
-        toast(records.length + '件のデータを読み込みました', 'ok');
-        refreshAll();
-        // Re-run active search if results are displayed
-        if (STATE.results && STATE.results.length > 0) { try { doSearch(); } catch(e) {} }
-      } else {
-        toast('データは最新です（' + STATE.data.length + '件）', 'i');
-      }
+      if (!records.length) { toast('有効なレコードがありません', 'i'); return; }
+      STATE.data = records;
+      STATE.data.sort(compareByDateDesc);
+      buildUserIndex();
+      toast(records.length + '件のデータを読み込みました', 'ok');
+      refreshAll();
     })
     .catch(function(err) {
       clearTimeout(timeoutId);
@@ -1419,28 +1305,14 @@ function fetchLatestData() {
       if (err.name === 'AbortError') {
         toast('データ取得がタイムアウトしました', 'er');
       } else if (msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('NetworkError') !== -1 || msg.indexOf('HTTP') !== -1) {
-        if (STATE.data.length > 0) {
-          toast('オフラインモード: 前回のデータを表示中', 'i');
-        } else {
-          toast('ネットワーク接続を確認してください', 'er');
-        }
+        toast('ネットワーク接続を確認してください', 'er');
       } else if (msg.indexOf('OperationError') !== -1) {
         toast('復号に失敗しました（パスコード不一致またはデータ破損）', 'er');
       } else {
         toast('データ取得に失敗: ' + msg.substring(0, 50), 'er');
-        console.error('fetchLatestData error:', err);
       }
-      var lastSync = localStorage.getItem(CONFIG.syncKey);
-      if (syncIndicator && lastSync) syncIndicator.textContent = '最終同期: ' + formatSyncTime(lastSync);
-      else if (syncIndicator) syncIndicator.textContent = '未同期';
+      if (hCount) hCount.textContent = '取得失敗';
     });
-}
-
-function formatSyncTime(isoStr) {
-  try {
-    var d = new Date(isoStr);
-    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-  } catch(e) { return isoStr; }
 }
 
 // ===== REPEATER DETECTION =====
@@ -1851,15 +1723,9 @@ function checkPasscode() {
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  loadData();
-  refreshAll();
-  // sessionStorageにパスコードは保存しない（セキュリティ対策）
-  // CryptoKeyが既にSTATEにあればそれを使う、なければfetchしない
   if (STATE.cryptoKey) {
     fetchLatestData();
   }
-  // CryptoKeyがない場合（ページリロード後）は再ログインが必要
-  // localStorageのキャッシュデータは上のloadData()で表示済み
 }
 
 function logout() {
@@ -1870,61 +1736,6 @@ function logout() {
   passcodeInput = '';
   updateDots();
   document.getElementById('lerr').textContent = '';
-}
-
-// ===== FILE OPERATIONS =====
-function importCSV(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var records = csvToRecords(e.target.result);
-      if (!records.length) { toast('有効なレコードが見つかりません', 'er'); return; }
-      var result = mergeData(records);
-      var msg = result.added + '件を反映';
-      if (result.removed > 0) msg += '（' + result.removed + '件を上書き更新）';
-      msg += '　合計' + STATE.data.length + '件';
-      toast(msg, 'ok');
-      refreshAll();
-    } catch (err) {
-      toast('読み込みに失敗しました: ' + err.message, 'er');
-    }
-  };
-  reader.readAsText(file, 'UTF-8');
-  input.value = '';
-}
-
-function exportCSV() {
-  if (!STATE.data.length) { toast('データがありません', 'er'); return; }
-  var headers = ['No','日付','開始時間','終了時間','対応時間','UserID','機種','性別','相談内容','対応内容','特記事項','担当','場所','インポート日'];
-  var esc = function(s) { return '"' + (s || '').replace(/"/g, '""') + '"'; };
-  var lines = [headers.join(',')];
-  for (var i = 0; i < STATE.data.length; i++) {
-    var r = STATE.data[i];
-    lines.push([
-      esc(r.no), esc(r.date), esc(r.startTime), esc(r.endTime), esc(r.duration),
-      esc(r.userId), esc(r.device), esc(r.gender),
-      esc(r.complaint), esc(r.response), esc(r.notes),
-      esc(r.staff), esc(r.location), esc(r.importDate)
-    ].join(','));
-  }
-  var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'taimen_backup_' + new Date().toISOString().slice(0, 10) + '.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('エクスポートが完了しました', 'ok');
-}
-
-function nukeData() {
-  if (!confirm('すべてのデータを削除しますか？\nこの操作は元に戻せません。')) return;
-  if (!confirm('本当に削除してよろしいですか？\n（最終確認）')) return;
-  STATE.data = [];
-  localStorage.removeItem(CONFIG.storageKey);
-  refreshAll();
-  toast('すべてのデータを削除しました', 'i');
 }
 
 // ===== SEARCH =====
@@ -1981,7 +1792,10 @@ function doSearch() {
         var now = new Date();
         var y = now.getFullYear();
         var m = String(now.getMonth() + 1).padStart(2, '0');
-        if (periodFilter === 'custom') {
+        if (periodFilter === 'latest') {
+          var latestD = STATE.data[0] ? STATE.data[0].date : '';
+          if (rd !== latestD) return false;
+        } else if (periodFilter === 'custom') {
           var fromDate = document.getElementById('si-from').value;
           var toDate = document.getElementById('si-to').value;
           if (fromDate && rd < fromDate) return false;
@@ -1992,25 +1806,9 @@ function doSearch() {
           sw.setDate(now.getDate() - dayOfWeek + 1);
           var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
           if (rd < startWeek) return false;
-        } else if (periodFilter === 'last') {
-          var slm = new Date(y, now.getMonth() - 1, 1);
-          var elm = new Date(y, now.getMonth(), 0);
-          var startLast = slm.getFullYear() + '-' + String(slm.getMonth() + 1).padStart(2, '0') + '-01';
-          var endLast = elm.getFullYear() + '-' + String(elm.getMonth() + 1).padStart(2, '0') + '-' + String(elm.getDate()).padStart(2, '0');
-          if (rd < startLast || rd > endLast) return false;
-        } else if (periodFilter === 'year') {
-          if (rd.indexOf(String(y)) !== 0) return false;
-        } else {
-          var months = parseInt(periodFilter);
-          if (months === 1) {
-            var startMonth = y + '-' + m + '-01';
-            if (rd < startMonth) return false;
-          } else {
-            var sm = new Date(now);
-            sm.setMonth(sm.getMonth() - months);
-            var startStr = sm.getFullYear() + '-' + String(sm.getMonth() + 1).padStart(2, '0') + '-' + String(sm.getDate()).padStart(2, '0');
-            if (rd < startStr) return false;
-          }
+        } else if (periodFilter === '1') {
+          var startMonth = y + '-' + m + '-01';
+          if (rd < startMonth) return false;
         }
       }
       if (escFilter === 'yes' && !hasEscalation(r)) return false;
@@ -2215,25 +2013,25 @@ function renderHome() {
   document.getElementById('hasdata').style.display = hasData ? 'block' : 'none';
   if (!hasData) return;
 
-  var now = new Date();
-  var thisYM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  var thisMonthCount = 0;
+  var latestDate = STATE.data[0] ? STATE.data[0].date : '';
+  var latestCount = 0;
   var catCounts = {};
   var uniqueIds = {};
   var escCount = 0;
 
   for (var i = 0; i < STATE.data.length; i++) {
     var r = STATE.data[i];
-    if (r.date && r.date.substring(0, 7) === thisYM) thisMonthCount++;
+    if (r.date === latestDate) latestCount++;
     catCounts[r.category] = (catCounts[r.category] || 0) + 1;
     if (isValidUserId(r.userId)) uniqueIds[r.userId] = true;
     if (hasEscalation(r)) escCount++;
   }
   var uniqueUsers = Object.keys(uniqueIds).length;
+  var latestLabel = latestDate ? (parseInt(latestDate.substring(5, 7)) + '/' + parseInt(latestDate.substring(8, 10))) : '';
 
   document.getElementById('stats').innerHTML =
     '<div class="st" onclick="go(\'search\')"><div class="st-v">' + STATE.data.length + '</div><div class="st-l">全レコード</div></div>' +
-    '<div class="st" onclick="searchByPeriod(\'1\')"><div class="st-v">' + thisMonthCount + '</div><div class="st-l">今月の対応</div></div>' +
+    '<div class="st" onclick="searchByPeriod(\'latest\')"><div class="st-v">' + latestCount + '</div><div class="st-l">今回 (' + latestLabel + ')</div></div>' +
     '<div class="st"><div class="st-v">' + uniqueUsers + '</div><div class="st-l">ユニークユーザー</div></div>' +
     '<div class="st" onclick="searchByEscalation()"><div class="st-v">' + escCount + '</div><div class="st-l">エスカレ件数</div></div>';
 
@@ -2408,7 +2206,7 @@ function updateWkToggleLabel() {
 }
 
 // ===== STATS PANEL =====
-var STATS_PERIOD = 'all';
+var STATS_PERIOD = 'latest';
 
 function setStatsPeriod(period) {
   STATS_PERIOD = period;
@@ -2419,15 +2217,19 @@ function getStatsDateRange(period) {
   var now = new Date();
   var y = now.getFullYear();
   var m = now.getMonth();
-  if (period === 'thisMonth') return { start: y + '-' + String(m + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: y + '年' + (m + 1) + '月' };
-  if (period === 'lastMonth') {
-    var lm = new Date(y, m - 1, 1);
-    var lme = new Date(y, m, 0);
-    return { start: lm.getFullYear() + '-' + String(lm.getMonth() + 1).padStart(2, '0') + '-01', end: lme.getFullYear() + '-' + String(lme.getMonth() + 1).padStart(2, '0') + '-' + String(lme.getDate()).padStart(2, '0'), label: lm.getFullYear() + '年' + (lm.getMonth() + 1) + '月' };
+  if (period === 'latest') {
+    var latestD = STATE.data[0] ? STATE.data[0].date : '';
+    if (!latestD) return { start: '0000-01-01', end: '9999-12-31', label: '今回' };
+    var lbl = parseInt(latestD.substring(5, 7)) + '/' + parseInt(latestD.substring(8, 10));
+    return { start: latestD, end: latestD, label: '今回 (' + lbl + ')' };
   }
-  if (period === '3m') { var s = new Date(y, m - 2, 1); return { start: s.getFullYear() + '-' + String(s.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去3ヶ月' }; }
-  if (period === '6m') { var s6 = new Date(y, m - 5, 1); return { start: s6.getFullYear() + '-' + String(s6.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去6ヶ月' }; }
-  if (period === 'thisYear') return { start: y + '-01-01', end: '9999-12-31', label: y + '年' };
+  if (period === 'thisWeek') {
+    var dayOfWeek = now.getDay() || 7;
+    var sw = new Date(now); sw.setDate(now.getDate() - dayOfWeek + 1);
+    var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
+    return { start: startWeek, end: '9999-12-31', label: '今週' };
+  }
+  if (period === 'thisMonth') return { start: y + '-' + String(m + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: y + '年' + (m + 1) + '月' };
   if (period === 'custom') {
     var from = document.getElementById('stats-from');
     var to = document.getElementById('stats-to');
@@ -2454,9 +2256,9 @@ function renderStatsPanel() {
   var data = filterByPeriod(STATE.data, range);
   var html = '';
 
-  // Period selector - 5 buttons (reduced from 7: removed lastMonth and 6m)
+  // Period selector - 5 buttons: 今回/今週/今月/全期間/期間指定
   html += '<div class="stats-period">';
-  var periods = [['thisMonth','今月'],['3m','3ヶ月'],['thisYear','今年'],['all','全期間'],['custom','期間指定']];
+  var periods = [['latest','今回'],['thisWeek','今週'],['thisMonth','今月'],['all','全期間'],['custom','期間指定']];
   periods.forEach(function(p) {
     html += '<button class="stats-period-btn' + (STATS_PERIOD === p[0] ? ' on' : '') + '" onclick="setStatsPeriod(\'' + p[0] + '\')">' + p[1] + '</button>';
   });
@@ -2810,19 +2612,6 @@ function renderStatsPanel() {
 
 function renderSettings() {
   document.getElementById('im').textContent = '現在: ' + STATE.data.length + '件のレコード';
-  var raw = localStorage.getItem(CONFIG.storageKey) || '';
-  var used = new Blob([raw]).size;
-  var max = CONFIG.storageLimitBytes;
-  var pct = ((used / max) * 100).toFixed(1);
-  document.getElementById('sto').textContent =
-    '使用量: ' + (used / 1024).toFixed(0) + 'KB / ' + (max / 1024).toFixed(0) + 'KB (' + pct + '%)';
-  document.getElementById('sbf').style.width = Math.min(parseFloat(pct), 100) + '%';
-  // 同期情報
-  var lastSync = localStorage.getItem(CONFIG.syncKey);
-  var syncInfo = document.getElementById('syncInfo');
-  if (syncInfo) {
-    syncInfo.textContent = lastSync ? '最終同期: ' + formatSyncTime(lastSync) : '未同期（サーバーからデータ未取得）';
-  }
 }
 
 // ===== UI NAVIGATION =====
