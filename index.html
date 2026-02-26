@@ -2482,7 +2482,7 @@ function renderStatsPanel() {
 
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
-    html += '<div class="vbar-wrap">';
+    html += '<div class="vbar-wrap" style="height:100px">';
     escCounts.forEach(function(val) {
       var pct = (val / maxEsc * 100);
       html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:var(--red)"></div></div>';
