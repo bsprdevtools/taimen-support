@@ -2472,24 +2472,20 @@ function renderStatsPanel() {
     html += '</div></div>';
   }
 
-  // === Escalation Rate Trend (vertical bar chart) ===
+  // === Escalation Count (vertical bar chart) ===
   if (monthKeys.length > 1) {
-    var escRates = monthKeys.map(function(ym) {
-      var total = monthCounts[ym] || 0;
-      var esc = monthEscCounts[ym] || 0;
-      return total > 0 ? Math.round(esc / total * 100) : 0;
+    var escCounts = monthKeys.map(function(ym) {
+      return monthEscCounts[ym] || 0;
     });
-    var maxRate = Math.max.apply(null, escRates);
-    if (maxRate === 0) maxRate = 10;
-    maxRate = Math.ceil(maxRate / 5) * 5;
+    var maxEsc = Math.max.apply(null, escCounts);
+    if (maxEsc === 0) maxEsc = 1;
 
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>エスカレーション率の推移</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
     html += '<div class="vbar-wrap">';
-    escRates.forEach(function(val) {
-      var pct = maxRate > 0 ? (val / maxRate * 100) : 0;
-      var color = val >= 15 ? 'var(--red)' : val >= 10 ? 'var(--amber)' : 'var(--blue)';
-      html += '<div class="vbar"><div class="vbar-val">' + (val > 0 ? val + '%' : '-') + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:' + color + '"></div></div>';
+    escCounts.forEach(function(val) {
+      var pct = (val / maxEsc * 100);
+      html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:var(--red)"></div></div>';
     });
     html += '</div>';
     html += '<div class="vbar-labels">';
