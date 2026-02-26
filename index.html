@@ -571,12 +571,12 @@ body{
 /* Sparkline / mini line chart */
 .spark-wrap{position:relative;height:100px;margin-top:8px}
 .spark-svg{width:100%;height:100%}
-.spark-line{fill:none;stroke:var(--red);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.spark-line{fill:none;stroke:var(--red);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .spark-area{fill:url(#sparkGrad)}
-.spark-dot{fill:var(--red);stroke:#fff;stroke-width:2}
-.spark-grid-line{stroke:var(--border-lt);stroke-width:1;stroke-dasharray:4 4}
+.spark-dot{fill:var(--red);stroke:#fff;stroke-width:2.5}
+.spark-grid-line{stroke:var(--border-lt);stroke-width:0.5;stroke-dasharray:6 4}
 .spark-label{font-size:.65rem;fill:var(--text3);font-weight:500}
-.spark-val-label{font-size:.62rem;fill:var(--navy-700);font-weight:700}
+.spark-val-label{font-size:11px;fill:var(--navy-700);font-weight:700}
 
 /* Period selector - 2 rows for clean layout */
 .stats-period{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:18px;background:var(--bg2);padding:5px;border-radius:var(--r)}
@@ -2481,12 +2481,12 @@ function renderStatsPanel() {
     });
     var maxRate = Math.max.apply(null, escRates);
     if (maxRate === 0) maxRate = 10;
-    var svgW = 100;
-    var svgH = 80;
-    var padL = 1;
-    var padR = 1;
-    var padT = 12;
-    var padB = 5;
+    var svgW = 400;
+    var svgH = 160;
+    var padL = 5;
+    var padR = 5;
+    var padT = 24;
+    var padB = 10;
     var drawW = svgW - padL - padR;
     var drawH = svgH - padT - padB;
 
@@ -2502,7 +2502,7 @@ function renderStatsPanel() {
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>エスカレーション率の推移</div>';
     html += '<div class="spark-wrap">';
-    html += '<svg class="spark-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" preserveAspectRatio="none">';
+    html += '<svg class="spark-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '" preserveAspectRatio="xMidYMid meet">';
     html += '<defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dc2626" stop-opacity="0.25"/><stop offset="100%" stop-color="#dc2626" stop-opacity="0"/></linearGradient></defs>';
     // Grid lines
     for (var gi = 0; gi <= 4; gi++) {
@@ -2512,8 +2512,8 @@ function renderStatsPanel() {
     html += '<path class="spark-area" d="' + areaPath + '"/>';
     html += '<path class="spark-line" d="' + linePath + '"/>';
     points.forEach(function(p) {
-      html += '<circle class="spark-dot" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3"/>';
-      html += '<text class="spark-val-label" x="' + p.x.toFixed(1) + '" y="' + Math.max(p.y - 5, 8).toFixed(1) + '" text-anchor="middle">' + p.val + '%</text>';
+      html += '<circle class="spark-dot" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="5"/>';
+      html += '<text class="spark-val-label" x="' + p.x.toFixed(1) + '" y="' + Math.max(p.y - 10, 14).toFixed(1) + '" text-anchor="middle">' + p.val + '%</text>';
     });
     html += '</svg>';
     html += '</div>';
