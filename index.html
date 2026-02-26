@@ -2472,7 +2472,7 @@ function renderStatsPanel() {
     html += '</div></div>';
   }
 
-  // === Escalation Rate Trend (CSS positioned line chart) ===
+  // === Escalation Rate Trend (vertical bar chart) ===
   if (monthKeys.length > 1) {
     var escRates = monthKeys.map(function(ym) {
       var total = monthCounts[ym] || 0;
@@ -2482,47 +2482,17 @@ function renderStatsPanel() {
     var maxRate = Math.max.apply(null, escRates);
     if (maxRate === 0) maxRate = 10;
     maxRate = Math.ceil(maxRate / 5) * 5;
-    var chartH = 140;
 
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>エスカレーション率の推移</div>';
-    // Chart area with dots and labels positioned via flex
-    html += '<div style="position:relative;height:' + chartH + 'px;margin:16px 8px 0;border-bottom:1px solid var(--border-lt)">';
-    // Grid lines
-    for (var gi = 0; gi <= 4; gi++) {
-      var gPct = gi * 25;
-      html += '<div style="position:absolute;left:0;right:0;bottom:' + gPct + '%;border-top:1px dashed var(--border-lt);opacity:.5"></div>';
-    }
-    // SVG for line only - uses percentage-based coordinates
-    var svgPts = escRates.map(function(val, idx) {
-      var xPct = monthKeys.length > 1 ? (idx / (monthKeys.length - 1)) * 100 : 50;
-      var yPct = maxRate > 0 ? (val / maxRate) * 100 : 0;
-      return { xPct: xPct, yPct: yPct, val: val };
-    });
-    html += '<svg style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible" preserveAspectRatio="none">';
-    html += '<defs><linearGradient id="escGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dc2626" stop-opacity="0.15"/><stop offset="100%" stop-color="#dc2626" stop-opacity="0"/></linearGradient></defs>';
-    // Area fill
-    var areaD = '';
-    svgPts.forEach(function(p, i) {
-      areaD += (i === 0 ? 'M' : 'L') + p.xPct + ',' + (100 - p.yPct);
-    });
-    areaD += ' L' + svgPts[svgPts.length - 1].xPct + ',100 L' + svgPts[0].xPct + ',100 Z';
-    html += '<path d="' + areaD + '" fill="url(#escGrad)" vector-effect="non-scaling-stroke"/>';
-    // Line
-    var lineD = '';
-    svgPts.forEach(function(p, i) {
-      lineD += (i === 0 ? 'M' : 'L') + p.xPct + ',' + (100 - p.yPct);
-    });
-    html += '<path d="' + lineD + '" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
-    html += '</svg>';
-    // Dots and value labels as absolutely positioned divs
-    svgPts.forEach(function(p) {
-      html += '<div style="position:absolute;left:' + p.xPct + '%;bottom:' + p.yPct + '%;transform:translate(-50%,50%);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>';
-      html += '<div style="position:absolute;left:' + p.xPct + '%;bottom:' + (p.yPct + 8) + '%;transform:translateX(-50%);font-size:.82rem;font-weight:700;color:var(--navy-700);white-space:nowrap">' + (p.val > 0 ? p.val + '%' : '-') + '</div>';
+    html += '<div class="vbar-wrap">';
+    escRates.forEach(function(val) {
+      var pct = maxRate > 0 ? (val / maxRate * 100) : 0;
+      var color = val >= 15 ? 'var(--red)' : val >= 10 ? 'var(--amber)' : 'var(--blue)';
+      html += '<div class="vbar"><div class="vbar-val">' + (val > 0 ? val + '%' : '-') + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:' + color + '"></div></div>';
     });
     html += '</div>';
-    // Month labels
-    html += '<div style="display:flex;padding:8px 0 0">';
+    html += '<div class="vbar-labels">';
     var spkPrevYr = '';
     monthKeys.forEach(function(ym) {
       var parts = ym.split('-');
@@ -2530,10 +2500,9 @@ function renderStatsPanel() {
       var mon = parseInt(parts[1]);
       var showYr = multiYear && (yr !== spkPrevYr);
       spkPrevYr = yr;
-      html += '<div style="flex:1;font-size:.75rem;color:var(--text3);text-align:center">' + mon + '月' + (showYr ? '<br><span style="font-size:.6rem;opacity:.7">' + yr + '</span>' : '') + '</div>';
+      html += '<div class="vbar-lbl">' + mon + '月' + (showYr ? '<span class="vbar-lbl-year">' + yr + '</span>' : '') + '</div>';
     });
-    html += '</div>';
-    html += '</div>';
+    html += '</div></div>';
   }
 
   // === Category Horizontal Bar ===
