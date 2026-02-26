@@ -2472,7 +2472,7 @@ function renderStatsPanel() {
     html += '</div></div>';
   }
 
-  // === Escalation Rate Trend (SVG sparkline) ===
+  // === Escalation Rate Trend (CSS positioned line chart) ===
   if (monthKeys.length > 1) {
     var escRates = monthKeys.map(function(ym) {
       var total = monthCounts[ym] || 0;
@@ -2481,44 +2481,48 @@ function renderStatsPanel() {
     });
     var maxRate = Math.max.apply(null, escRates);
     if (maxRate === 0) maxRate = 10;
-    var svgW = 400;
-    var svgH = 160;
-    var padL = 5;
-    var padR = 5;
-    var padT = 24;
-    var padB = 10;
-    var drawW = svgW - padL - padR;
-    var drawH = svgH - padT - padB;
-
-    var points = escRates.map(function(val, idx) {
-      var x = padL + (monthKeys.length > 1 ? (idx / (monthKeys.length - 1)) * drawW : drawW / 2);
-      var y = padT + drawH - (maxRate > 0 ? (val / maxRate) * drawH : 0);
-      return { x: x, y: y, val: val };
-    });
-
-    var linePath = points.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
-    var areaPath = linePath + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (padT + drawH) + ' L' + points[0].x.toFixed(1) + ',' + (padT + drawH) + ' Z';
+    maxRate = Math.ceil(maxRate / 5) * 5;
+    var chartH = 140;
 
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>エスカレーション率の推移</div>';
-    html += '<div class="spark-wrap">';
-    html += '<svg class="spark-svg" viewBox="0 0 ' + svgW + ' ' + svgH + '">';
-    html += '<defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dc2626" stop-opacity="0.25"/><stop offset="100%" stop-color="#dc2626" stop-opacity="0"/></linearGradient></defs>';
+    // Chart area with dots and labels positioned via flex
+    html += '<div style="position:relative;height:' + chartH + 'px;margin:16px 8px 0;border-bottom:1px solid var(--border-lt)">';
     // Grid lines
     for (var gi = 0; gi <= 4; gi++) {
-      var gy = padT + (drawH / 4) * gi;
-      html += '<line class="spark-grid-line" x1="' + padL + '" y1="' + gy.toFixed(1) + '" x2="' + (padL + drawW) + '" y2="' + gy.toFixed(1) + '"/>';
+      var gPct = gi * 25;
+      html += '<div style="position:absolute;left:0;right:0;bottom:' + gPct + '%;border-top:1px dashed var(--border-lt);opacity:.5"></div>';
     }
-    html += '<path class="spark-area" d="' + areaPath + '"/>';
-    html += '<path class="spark-line" d="' + linePath + '"/>';
-    points.forEach(function(p) {
-      html += '<circle class="spark-dot" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="5"/>';
-      html += '<text class="spark-val-label" x="' + p.x.toFixed(1) + '" y="' + Math.max(p.y - 10, 14).toFixed(1) + '" text-anchor="middle">' + p.val + '%</text>';
+    // SVG for line only - uses percentage-based coordinates
+    var svgPts = escRates.map(function(val, idx) {
+      var xPct = monthKeys.length > 1 ? (idx / (monthKeys.length - 1)) * 100 : 50;
+      var yPct = maxRate > 0 ? (val / maxRate) * 100 : 0;
+      return { xPct: xPct, yPct: yPct, val: val };
     });
+    html += '<svg style="position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible" preserveAspectRatio="none">';
+    html += '<defs><linearGradient id="escGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dc2626" stop-opacity="0.15"/><stop offset="100%" stop-color="#dc2626" stop-opacity="0"/></linearGradient></defs>';
+    // Area fill
+    var areaD = '';
+    svgPts.forEach(function(p, i) {
+      areaD += (i === 0 ? 'M' : 'L') + p.xPct + ',' + (100 - p.yPct);
+    });
+    areaD += ' L' + svgPts[svgPts.length - 1].xPct + ',100 L' + svgPts[0].xPct + ',100 Z';
+    html += '<path d="' + areaD + '" fill="url(#escGrad)" vector-effect="non-scaling-stroke"/>';
+    // Line
+    var lineD = '';
+    svgPts.forEach(function(p, i) {
+      lineD += (i === 0 ? 'M' : 'L') + p.xPct + ',' + (100 - p.yPct);
+    });
+    html += '<path d="' + lineD + '" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
     html += '</svg>';
+    // Dots and value labels as absolutely positioned divs
+    svgPts.forEach(function(p) {
+      html += '<div style="position:absolute;left:' + p.xPct + '%;bottom:' + p.yPct + '%;transform:translate(-50%,50%);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>';
+      html += '<div style="position:absolute;left:' + p.xPct + '%;bottom:' + (p.yPct + 8) + '%;transform:translateX(-50%);font-size:.82rem;font-weight:700;color:var(--navy-700);white-space:nowrap">' + (p.val > 0 ? p.val + '%' : '-') + '</div>';
+    });
     html += '</div>';
-    // Month labels under sparkline
-    html += '<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px">';
+    // Month labels
+    html += '<div style="display:flex;padding:8px 0 0">';
     var spkPrevYr = '';
     monthKeys.forEach(function(ym) {
       var parts = ym.split('-');
@@ -2526,7 +2530,7 @@ function renderStatsPanel() {
       var mon = parseInt(parts[1]);
       var showYr = multiYear && (yr !== spkPrevYr);
       spkPrevYr = yr;
-      html += '<div style="font-size:.65rem;color:var(--text3);text-align:center;flex:1">' + mon + '月' + (showYr ? '<br><span style="font-size:.55rem;opacity:.7">' + yr + '</span>' : '') + '</div>';
+      html += '<div style="flex:1;font-size:.75rem;color:var(--text3);text-align:center">' + mon + '月' + (showYr ? '<br><span style="font-size:.6rem;opacity:.7">' + yr + '</span>' : '') + '</div>';
     });
     html += '</div>';
     html += '</div>';
