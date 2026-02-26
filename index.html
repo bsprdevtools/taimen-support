@@ -1224,6 +1224,7 @@ function csvToRecords(csvText) {
     if (!date || date === 'nan') continue;
     var userId = get('UserID');
     if (['以下、余白', 'nan', '以下余白', '項番'].some(function(v) { return userId.indexOf(v) !== -1; })) userId = '';
+    if (['未確認', '確認漏れ', '失念', '未登録', '不明'].some(function(v) { return userId === v; })) userId = '';
     var rec = {
       no: get('No'),
       date: date,
