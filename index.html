@@ -1285,24 +1285,31 @@ function saveData() {
 }
 
 function mergeData(newRecords) {
-  var existingKeys = {};
-  STATE.data.forEach(function(r) {
-    existingKeys[r.date + '|' + r.startTime + '|' + r.userId + '|' + r.no] = true;
-  });
-  var added = 0;
+  // 新規レコードから「場所+日付」の組み合わせを抽出
+  var newSlots = {};
   for (var i = 0; i < newRecords.length; i++) {
-    var rec = newRecords[i];
-    var key = rec.date + '|' + rec.startTime + '|' + rec.userId + '|' + rec.no;
-    if (!existingKeys[key]) {
-      STATE.data.push(rec);
-      existingKeys[key] = true;
-      added++;
+    var r = newRecords[i];
+    var slot = (r.location || '') + '|' + r.date;
+    newSlots[slot] = true;
+  }
+  // 該当する場所+日付の既存データを除去（上書き準備）
+  var removed = 0;
+  var kept = [];
+  for (var j = 0; j < STATE.data.length; j++) {
+    var d = STATE.data[j];
+    var dSlot = (d.location || '') + '|' + d.date;
+    if (newSlots[dSlot]) {
+      removed++;
+    } else {
+      kept.push(d);
     }
   }
+  // 新規レコードを追加
+  STATE.data = kept.concat(newRecords);
   STATE.data.sort(compareByDateDesc);
   saveData();
   buildUserIndex();
-  return { added: added, skipped: newRecords.length - added };
+  return { added: newRecords.length, removed: removed };
 }
 
 // ===== CRYPTO: PBKDF2 + AES-GCM =====
@@ -1363,7 +1370,10 @@ function fetchLatestData() {
       localStorage.setItem(CONFIG.syncKey, now);
       if (syncIndicator) syncIndicator.textContent = '最終同期: ' + formatSyncTime(now);
       if (result.added > 0) {
-        toast('サーバーから' + result.added + '件の新規データを取得（合計' + STATE.data.length + '件）', 'ok');
+        var msg = result.added + '件を反映';
+        if (result.removed > 0) msg += '（' + result.removed + '件を上書き更新）';
+        msg += '　合計' + STATE.data.length + '件';
+        toast(msg, 'ok');
         refreshAll();
       } else if (before === 0) {
         toast(records.length + '件のデータを読み込みました', 'ok');
@@ -1815,7 +1825,10 @@ function importCSV(input) {
       var records = csvToRecords(e.target.result);
       if (!records.length) { toast('有効なレコードが見つかりません', 'er'); return; }
       var result = mergeData(records);
-      toast(result.added + '件追加（' + result.skipped + '件はスキップ）合計' + STATE.data.length + '件', 'ok');
+      var msg = result.added + '件を反映';
+      if (result.removed > 0) msg += '（' + result.removed + '件を上書き更新）';
+      msg += '　合計' + STATE.data.length + '件';
+      toast(msg, 'ok');
       refreshAll();
     } catch (err) {
       toast('読み込みに失敗しました: ' + err.message, 'er');
