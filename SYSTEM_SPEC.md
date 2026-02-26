@@ -23,8 +23,8 @@ taimen_support_data.csv
   ↓ encrypt_taimen_data.py（AES-256-GCM暗号化）
 data.enc + verify.enc
   ↓ update_taimen.py（git push）
-GitHub Pages（bsprdevtools/taimen-support）
-  ↓ iPad Safari でアクセス
+GitHub Pages（bsprdevtools/taimen-support）※非公開リポジトリ（GitHub Pro）
+  ↓ iPad Safari / サポートセンターPC でアクセス
 index.html がfetch → 復号 → 表示
 ```
 
@@ -80,8 +80,17 @@ Base64( [IV 12byte] [暗号文 + GCMタグ 16byte] )
 5. 認証後、`data.enc` をfetch → 同じ鍵で復号 → CSV表示
 
 ### セキュリティ機能
+- **GitHub Pro契約**: リポジトリを非公開（private）に設定。ソースコード・git履歴への第三者アクセスを遮断
 - パスコード5回失敗 → 30秒ロックアウト（カウントダウン表示）
 - セッション管理: `sessionStorage` にフラグ保存（タブ閉じで無効化）
+- 個人情報（氏名・住所・電話番号）はExcelから取り込まない設計（列マッピングに存在しない）
+
+### 共有先
+| 共有先 | 用途 | URL |
+|--------|------|-----|
+| 対面サポート現場（iPad） | シル人が対応時に過去事例を参照 | https://bsprdevtools.github.io/taimen-support/ |
+| サポートセンター | ユーザーからの問い合わせ時に対面サポート記録を確認 | 同上 |
+| 八王子市役所 | 運用報告・データ活用の共有 | パワポで説明（URLは共有判断による） |
 
 ---
 
@@ -188,6 +197,13 @@ python update_taimen.py
 - GitHub Pagesは静的ホスティング（サーバーサイド処理不可）
 - パスコードはネットワークに送信されない（端末内で完結）
 - AES-256-GCM + PBKDF2 100K iterationsで十分な強度
+
+### なぜGitHub Pro（privateリポジトリ）か
+- 八王子市への説明で「公開リポジトリにデータがある」は印象が悪い
+- privateにすることでgit履歴・ソースコードへの第三者アクセスを遮断
+- GitHub Pages自体はprivateでもURL公開だが、配信されるのは暗号化済みファイルのみ
+- 月$4（約600円）で全リポジトリprivate対応、他のHTMLシステムにも活用可能
+- アカウント: `bsprdevtools`（GitHub Proで契約）
 
 ### アイコン方式
 - Lucide Icons（インラインSVG）、CDN不要
