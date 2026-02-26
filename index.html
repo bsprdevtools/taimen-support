@@ -1107,6 +1107,9 @@ function extractKeywords(text) {
   return found;
 }
 
+var _similarCache = {};
+var _similarCacheSize = 0;
+
 function findSimilarCases(rec, maxResults) {
   maxResults = maxResults || CONFIG.similarCasesMax;
   if (!rec || !rec.complaint) return [];
@@ -1147,6 +1150,8 @@ function findSimilarCases(rec, maxResults) {
 }
 
 function renderSimilarCases(rec) {
+  var cacheKey = rec.date + '|' + rec.startTime + '|' + rec.no;
+  if (_similarCache[cacheKey] && _similarCacheSize === STATE.data.length) return _similarCache[cacheKey];
   var similar = findSimilarCases(rec);
   if (similar.length === 0) return '';
   var html = '<div class="sim-cases">';
@@ -1167,6 +1172,8 @@ function renderSimilarCases(rec) {
     html += '</div>';
   });
   html += '</div>';
+  _similarCache[cacheKey] = html;
+  _similarCacheSize = STATE.data.length;
   return html;
 }
 
@@ -1268,12 +1275,20 @@ function loadData() {
 
 function saveData() {
   try {
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify({
+    var payload = JSON.stringify({
       version: 4,
       timestamp: new Date().toISOString(),
       count: STATE.data.length,
       records: STATE.data
-    }));
+    });
+    localStorage.setItem(CONFIG.storageKey, payload);
+    // Check storage usage
+    try {
+      var used = new Blob([payload]).size;
+      if (used > CONFIG.storageLimitBytes * 0.8) {
+        toast('ストレージ使用量が80%を超えています。設定画面でエクスポートをお勧めします', 'er');
+      }
+    } catch (e2) { /* Blob size check failed, skip warning */ }
   } catch (e) {
     console.error('saveData error:', e);
     if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -1375,9 +1390,13 @@ function fetchLatestData() {
         msg += '　合計' + STATE.data.length + '件';
         toast(msg, 'ok');
         refreshAll();
+        // Re-run active search if results are displayed
+        if (STATE.results && STATE.results.length > 0) { try { doSearch(); } catch(e) {} }
       } else if (before === 0) {
         toast(records.length + '件のデータを読み込みました', 'ok');
         refreshAll();
+        // Re-run active search if results are displayed
+        if (STATE.results && STATE.results.length > 0) { try { doSearch(); } catch(e) {} }
       } else {
         toast('データは最新です（' + STATE.data.length + '件）', 'i');
       }
@@ -1436,6 +1455,7 @@ function getRepeatUsers() {
 
 // ===== USER INDEX (PERFORMANCE) =====
 function buildUserIndex() {
+  _similarCache = {}; _similarCacheSize = 0;
   STATE.userIndex = {};
   STATE.userRecords = {};
   for (var i = 0; i < STATE.data.length; i++) {
@@ -1470,7 +1490,7 @@ function buildKarte(userId) {
   records.forEach(function(r) {
     categories[r.category] = (categories[r.category] || 0) + 1;
     if (r.staff) {
-      r.staff.split(',').forEach(function(s) {
+      r.staff.split(/[,、]/).forEach(function(s) {
         var name = s.trim();
         if (name && name !== 'nan') staffCounts[name] = (staffCounts[name] || 0) + 1;
       });
@@ -1639,17 +1659,9 @@ function renderKarte(kd) {
 function showKarte(userId) {
   if (!userId) return;
   var cleanId = userId.replace(/[-\s]/g, '');
-  // Find exact match first, then partial
+  // Exact match only (after removing hyphens/spaces)
   var exactRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '') === cleanId; });
   var targetId = exactRecs.length > 0 ? exactRecs[0].userId : null;
-
-  if (!targetId) {
-    // Partial match
-    var partialRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '').indexOf(cleanId) !== -1; });
-    if (partialRecs.length > 0) {
-      targetId = partialRecs[0].userId;
-    }
-  }
 
   if (!targetId) {
     toast('該当するユーザーが見つかりません', 'i');
@@ -1744,8 +1756,16 @@ function toggleTl(idx) {
 
 // ===== LOGIN =====
 var passcodeInput = '';
+var passcodeFailCount = 0;
+var passcodeLockUntil = 0;
+var passcodeLockTimer = null;
 
 function nd(digit) {
+  if (passcodeLockUntil > Date.now()) {
+    var sec = Math.ceil((passcodeLockUntil - Date.now()) / 1000);
+    document.getElementById('lerr').textContent = 'ロック中（' + sec + '秒後に再試行できます）';
+    return;
+  }
   if (passcodeInput.length >= CONFIG.passcodeLength) return;
   passcodeInput += digit;
   updateDots();
@@ -1753,6 +1773,7 @@ function nd(digit) {
 }
 
 function ndel() {
+  if (passcodeLockUntil > Date.now()) return;
   passcodeInput = passcodeInput.slice(0, -1);
   updateDots();
   document.getElementById('lerr').textContent = '';
@@ -1774,6 +1795,7 @@ function checkPasscode() {
   deriveKey(entered).then(function(key) {
     return decryptData(key, CONFIG.verifyData).then(function(plaintext) {
       if (plaintext === CONFIG.verifyPlaintext) {
+        passcodeFailCount = 0;
         STATE.cryptoKey = key;
         sessionStorage.setItem(CONFIG.sessionKey, '1');
         showApp();
@@ -1782,12 +1804,35 @@ function checkPasscode() {
       }
     });
   }).catch(function() {
+    passcodeFailCount++;
     for (var i = 0; i < CONFIG.passcodeLength; i++) {
       var dot = document.getElementById('d' + i);
       if (dot) dot.classList.add('err');
     }
-    document.getElementById('lerr').textContent = 'パスコードが違います';
-    setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
+    if (passcodeFailCount >= 5) {
+      passcodeLockUntil = Date.now() + 30000;
+      document.getElementById('lerr').textContent = 'ロック中（30秒後に再試行できます）';
+      var numpadBtns = document.querySelectorAll('.numpad .np');
+      for (var j = 0; j < numpadBtns.length; j++) numpadBtns[j].disabled = true;
+      if (passcodeLockTimer) clearInterval(passcodeLockTimer);
+      passcodeLockTimer = setInterval(function() {
+        var remaining = Math.ceil((passcodeLockUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(passcodeLockTimer);
+          passcodeLockTimer = null;
+          passcodeFailCount = 0;
+          document.getElementById('lerr').textContent = '';
+          var btns = document.querySelectorAll('.numpad .np');
+          for (var k = 0; k < btns.length; k++) btns[k].disabled = false;
+        } else {
+          document.getElementById('lerr').textContent = 'ロック中（' + remaining + '秒後に再試行できます）';
+        }
+      }, 1000);
+      setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
+    } else {
+      document.getElementById('lerr').textContent = 'パスコードが違います（残り' + (5 - passcodeFailCount) + '回）';
+      setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
+    }
   });
 }
 
@@ -1890,7 +1935,7 @@ function doSearch() {
     var val = (document.getElementById('si-uid').value || '').trim().replace(/[-\s]/g, '');
     if (!val) { toast('ユーザーIDを入力してください', 'i'); return; }
     STATE.results = STATE.data.filter(function(r) {
-      return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1;
+      return (r.userId || '').replace(/[-\s]/g, '') === val;
     });
   } else if (mode === 'dev') {
     var val2 = (document.getElementById('si-dev').value || '').trim().toLowerCase();
@@ -1970,7 +2015,7 @@ function quickSearch() {
   var val = (document.getElementById('qi').value || '').trim().replace(/[-\s]/g, '');
   if (!val) return;
   var results = STATE.data
-    .filter(function(r) { return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1; })
+    .filter(function(r) { return (r.userId || '').replace(/[-\s]/g, '') === val; })
     .sort(compareByDateDesc);
   var box = document.getElementById('qr');
   if (!results.length) {
@@ -1978,15 +2023,17 @@ function quickSearch() {
     return;
   }
   var uid = results[0].userId;
-  var repeatCount = results.length;
+  var repeatCount = isValidUserId(uid) ? results.length : 0;
   var html = '';
   if (repeatCount > 1) {
     html += '<div class="rep-banner">' + icon('repeat', 16) + ' このユーザーは<b> ' + repeatCount + '回目 </b>のご来店です（初回: ' + formatDate(results[results.length - 1].date) + '）</div>';
   }
   html += '<p style="font-size:.88rem;color:var(--text2);margin-bottom:10px"><b>' + results.length + '件</b>の対応履歴</p>';
   var toShowQs = results.slice(0, 5);
+  var idxMapQs = new Map();
+  for (var mi = 0; mi < STATE.data.length; mi++) idxMapQs.set(STATE.data[mi], mi);
   for (var qi = 0; qi < toShowQs.length; qi++) {
-    html += renderRecordCard(toShowQs[qi], STATE.data.indexOf(toShowQs[qi]));
+    html += renderRecordCard(toShowQs[qi], idxMapQs.get(toShowQs[qi]) || 0);
   }
   html += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center">';
   if (results.length > 5) {
@@ -2122,8 +2169,10 @@ function renderResults() {
   }
   var html = repBanner + '<div class="r2c">';
   var toShow = STATE.results.slice(0, STATE.displayCount);
+  var idxMap = new Map();
+  for (var mi = 0; mi < STATE.data.length; mi++) idxMap.set(STATE.data[mi], mi);
   for (var i = 0; i < toShow.length; i++) {
-    html += renderRecordCard(toShow[i], STATE.data.indexOf(toShow[i]));
+    html += renderRecordCard(toShow[i], idxMap.get(toShow[i]) || 0);
   }
   html += '</div>';
   srDiv.innerHTML = html;
@@ -2264,7 +2313,7 @@ function renderWeeklySummary() {
   var escCount = 0;
   records.forEach(function(r) {
     cats[r.category] = (cats[r.category] || 0) + 1;
-    if (r.staff) r.staff.split(',').forEach(function(s) { if (s.trim()) staffSet[s.trim()] = true; });
+    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) { if (s.trim()) staffSet[s.trim()] = true; });
     if (hasEscalation(r)) escCount++;
   });
   var topCats = Object.keys(cats).sort(function(a, b) { return cats[b] - cats[a]; }).slice(0, 3);
@@ -2291,8 +2340,10 @@ function renderWeeklySummary() {
   html += '</div>';
   html += '<div class="wk-details-body">';
 
+  var idxMapWk = new Map();
+  for (var mi = 0; mi < STATE.data.length; mi++) idxMapWk.set(STATE.data[mi], mi);
   records.forEach(function(r, i) {
-    var idx = STATE.data.indexOf(r);
+    var idx = idxMapWk.get(r) || 0;
     var esc = hasEscalation(r);
     var repeat = getRepeatCount(r.userId);
     html += '<div class="wk-acc">';
@@ -2453,7 +2504,7 @@ function renderStatsPanel() {
         else durBuckets[3]++;
       }
     }
-    if (r.staff) r.staff.split(',').forEach(function(s) { var t = s.trim(); if (t && t !== 'nan') staffSet[t] = true; });
+    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) { var t = s.trim(); if (t && t !== 'nan') staffSet[t] = true; });
     var loc = r.location ? r.location.trim() : '';
     if (loc && loc !== 'nan') locationCounts[loc] = (locationCounts[loc] || 0) + 1;
   });
@@ -2653,7 +2704,7 @@ function renderStatsPanel() {
   // === Staff Horizontal Bar ===
   var staffCounts = {};
   data.forEach(function(r) {
-    if (r.staff) r.staff.split(',').forEach(function(s) {
+    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) {
       var t = s.trim();
       if (t && t !== 'nan') staffCounts[t] = (staffCounts[t] || 0) + 1;
     });
@@ -2884,7 +2935,7 @@ function populateFilters() {
   var staffSet = {};
   STATE.data.forEach(function(r) {
     if (r.staff) {
-      r.staff.split(',').forEach(function(s) {
+      r.staff.split(/[,、]/).forEach(function(s) {
         var trimmed = s.trim();
         if (trimmed && trimmed !== 'nan') staffSet[trimmed] = true;
       });
