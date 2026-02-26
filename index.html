@@ -2456,7 +2456,7 @@ function renderStatsPanel() {
     monthKeys.forEach(function(ym) {
       var count = monthCounts[ym];
       var pct = maxMonth > 0 ? (count / maxMonth * 100) : 0;
-      html += '<div class="vbar"><div class="vbar-val">' + count + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%"></div></div>';
+      html += '<div class="vbar"><div class="vbar-val">' + count + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 15) + '%"></div></div>';
     });
     html += '</div>';
     html += '<div class="vbar-labels">';
@@ -2484,8 +2484,9 @@ function renderStatsPanel() {
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
     html += '<div class="vbar-wrap">';
     escCounts.forEach(function(val) {
-      var pct = (val / maxEsc * 100);
-      html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:var(--red)"></div></div>';
+      var pct = maxEsc > 0 ? (val / maxEsc * 100) : 0;
+      var h = val > 0 ? Math.max(pct, 15) : 3;
+      html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + h + '%;background:var(--red)"></div></div>';
     });
     html += '</div>';
     html += '<div class="vbar-labels">';
