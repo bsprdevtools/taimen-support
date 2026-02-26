@@ -537,9 +537,9 @@ body{
 .kpi-sub{font-size:.72rem;color:var(--text3);margin-top:3px;font-weight:500}
 
 /* Vertical bar chart */
-.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:180px;padding:0 4px;border-bottom:2px solid var(--border-lt)}
+.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:110px;padding:0 4px;border-bottom:2px solid var(--border-lt)}
 .vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0}
-.vbar-fill{width:100%;max-width:40px;border-radius:5px 5px 0 0;background:var(--blue);transition:height .3s ease;min-height:2px}
+.vbar-fill{width:100%;max-width:50px;border-radius:5px 5px 0 0;background:var(--blue);transition:height .3s ease;min-height:2px}
 .vbar-val{font-size:.72rem;font-weight:700;color:var(--navy-700);margin-bottom:3px;font-variant-numeric:tabular-nums}
 .vbar-labels{display:flex;gap:6px;padding:8px 4px 0;justify-content:space-around}
 .vbar-lbl{flex:1;text-align:center;font-size:.68rem;color:var(--text3);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
@@ -599,7 +599,7 @@ body{
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-v{font-size:1.7rem}
   .hbar-label{min-width:80px;max-width:120px;font-size:.78rem}
-  .vbar-wrap{height:140px}
+  .vbar-wrap{height:100px}
   .vbar-lbl{font-size:.6rem}
   .heatmap{gap:3px;font-size:.7rem}
   .hm-cell{padding:6px 2px;min-height:30px;font-size:.7rem}
@@ -2482,7 +2482,7 @@ function renderStatsPanel() {
 
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
-    html += '<div class="vbar-wrap" style="height:100px">';
+    html += '<div class="vbar-wrap">';
     escCounts.forEach(function(val) {
       var pct = (val / maxEsc * 100);
       html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 3) + '%;background:var(--red)"></div></div>';
