@@ -702,7 +702,7 @@ body{
       </div>
 
       <div class="card">
-        <div class="card-t"><span class="ct-ico">📅</span>週ごとの対応サマリー</div>
+        <div class="card-t"><span class="ct-ico">📅</span>インポート回ごとの対応サマリー</div>
         <select class="fsel" id="weekSelect" onchange="renderWeeklySummary()" style="margin-bottom:12px"></select>
         <div id="weeklySummary"></div>
       </div>
@@ -2144,19 +2144,20 @@ function renderHome() {
   renderWeeklySummary();
 }
 
-function getWeekRange(weeksAgo) {
-  var now = new Date();
-  var dayOfWeek = now.getDay() || 7; // 月曜=1
-  var monday = new Date(now);
-  monday.setDate(now.getDate() - dayOfWeek + 1 - (weeksAgo * 7));
-  monday.setHours(0, 0, 0, 0);
-  var sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  return {
-    start: monday.getFullYear() + '-' + String(monday.getMonth() + 1).padStart(2, '0') + '-' + String(monday.getDate()).padStart(2, '0'),
-    end: sunday.getFullYear() + '-' + String(sunday.getMonth() + 1).padStart(2, '0') + '-' + String(sunday.getDate()).padStart(2, '0'),
-    label: (monday.getMonth() + 1) + '/' + monday.getDate() + '〜' + (sunday.getMonth() + 1) + '/' + sunday.getDate()
-  };
+function getImportDates() {
+  var dates = {};
+  STATE.data.forEach(function(r) {
+    var d = r.importDate || '';
+    if (d) {
+      var key = d.split(' ')[0]; // 日付部分だけ
+      if (!dates[key]) dates[key] = [];
+      dates[key].push(r);
+    }
+  });
+  // インポート日がないレコードも「不明」グループに
+  var noDate = STATE.data.filter(function(r) { return !r.importDate; });
+  if (noDate.length > 0) dates['（インポート日なし）'] = noDate;
+  return dates;
 }
 
 function renderWeeklySummary() {
@@ -2164,25 +2165,26 @@ function renderWeeklySummary() {
   var select = document.getElementById('weekSelect');
   if (!container || !select) return;
 
+  var importGroups = getImportDates();
+  var sortedDates = Object.keys(importGroups).filter(function(k) { return k !== '（インポート日なし）'; }).sort().reverse();
+  if (importGroups['（インポート日なし）']) sortedDates.push('（インポート日なし）');
+
   // プルダウン構築（初回のみ）
   if (select.options.length === 0) {
-    var labels = ['今週', '前回（先週）', '前々回（2週前）', '3週前', '4週前', '5週前', '6週前', '7週前'];
-    for (var i = 0; i < labels.length; i++) {
-      var wr = getWeekRange(i);
-      var recs = STATE.data.filter(function(r) { return r.date >= wr.start && r.date <= wr.end; });
+    for (var i = 0; i < sortedDates.length; i++) {
+      var d = sortedDates[i];
+      var count = importGroups[d].length;
       var opt = document.createElement('option');
-      opt.value = String(i);
-      opt.textContent = labels[i] + '（' + wr.label + '）' + recs.length + '件';
+      opt.value = d;
+      var label = (i === 0) ? '最新（' + d + '）' : d;
+      opt.textContent = label + ' ' + count + '件';
       select.appendChild(opt);
     }
-    select.value = '1'; // デフォルトは前回（先週）
+    if (sortedDates.length > 0) select.value = sortedDates[0];
   }
 
-  var weeksAgo = parseInt(select.value) || 0;
-  var range = getWeekRange(weeksAgo);
-  var records = STATE.data.filter(function(r) {
-    return r.date >= range.start && r.date <= range.end;
-  });
+  var selectedDate = select.value;
+  var records = importGroups[selectedDate] || [];
 
   if (records.length === 0) {
     container.innerHTML = '<div class="wk-none">この週の対応記録はありません</div>';
