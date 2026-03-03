@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="対応履歴">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a365d' width='100' height='100' rx='20'/><g transform='translate(26,22) scale(2)' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='8' height='4' x='8' y='2' rx='1' ry='1'/><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><path d='M12 11h4'/><path d='M12 16h4'/><path d='M8 11h.01'/><path d='M8 16h.01'/></g></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a365d' width='100' height='100' rx='20'/><text x='50' y='65' text-anchor='middle' font-size='50'>📋</text></svg>">
 <title>対面サポート CRM カルテ</title>
 <style>
 /* ============================================================
@@ -54,9 +54,8 @@ body{
   background:linear-gradient(135deg,var(--navy-700),var(--navy-500));
   border-radius:16px;margin:0 auto 20px;
   display:flex;align-items:center;justify-content:center;
-  color:#fff;box-shadow:0 4px 12px rgba(26,54,93,.3);
+  font-size:28px;color:#fff;box-shadow:0 4px 12px rgba(26,54,93,.3);
 }
-.login-logo svg{width:32px;height:32px;stroke-width:1.8}
 .login-title{font-size:1.2rem;font-weight:700;color:var(--navy-700);margin-bottom:2px}
 .login-sub{font-size:.85rem;color:var(--text2);margin-bottom:30px}
 .dots{display:flex;justify-content:center;gap:16px;margin-bottom:28px}
@@ -86,8 +85,7 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;z-index:100;
 }
-.header h1{font-size:1.1rem;font-weight:700;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
-.header h1 svg{width:20px;height:20px;stroke-width:1.8;flex-shrink:0}
+.header h1{font-size:1.1rem;font-weight:700;letter-spacing:.4px}
 .header-r{display:flex;align-items:center;gap:12px}
 .header-count{
   font-size:.8rem;opacity:.9;font-variant-numeric:tabular-nums;
@@ -101,31 +99,23 @@ body{
 }
 .h-btn:active{background:rgba(255,255,255,.25)}
 
-/* ===== TABS (iOS Tab Bar style) ===== */
+/* ===== TABS ===== */
 .tabs{
-  display:flex;
-  background:rgba(249,249,249,.94);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);
-  backdrop-filter:saturate(180%) blur(20px);
-  border-top:.5px solid rgba(0,0,0,.15);
-  position:fixed;bottom:0;left:0;right:0;z-index:99;
-  padding-bottom:env(safe-area-inset-bottom,0);
+  display:flex;background:var(--card);border-bottom:1px solid var(--border-lt);
+  position:sticky;top:50px;z-index:99;
 }
 .tab{
-  flex:1;padding:6px 4px 4px;border:none;background:none;
-  font-size:.65rem;font-weight:500;color:#8e8e93;cursor:pointer;
-  transition:color .15s ease;
+  flex:1;padding:13px 6px 11px;border:none;background:none;
+  font-size:.82rem;font-weight:500;color:var(--text3);cursor:pointer;
+  border-bottom:3px solid transparent;transition:all var(--tr);
   -webkit-tap-highlight-color:transparent;
-  display:flex;flex-direction:column;align-items:center;gap:1px;
-  letter-spacing:.01em;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
 }
-.tab .ico{display:flex;align-items:center;justify-content:center;width:30px;height:30px}
-.tab .ico svg{width:26px;height:26px;transition:transform .12s ease}
-.tab:active .ico svg{transform:scale(.82)}
-.tab.on{color:var(--blue);font-weight:600}
+.tab .ico{font-size:1.2rem}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
 
 /* ===== PANELS ===== */
-.pnl{display:none;padding:16px 16px 100px;max-width:960px;margin:0 auto}
+.pnl{display:none;padding:20px 16px 100px;max-width:960px;margin:0 auto}
 .pnl.on{display:block}
 
 /* ===== CARDS ===== */
@@ -137,8 +127,7 @@ body{
   font-size:.95rem;font-weight:700;color:var(--navy-700);
   margin-bottom:14px;display:flex;align-items:center;gap:8px;
 }
-.card-t .ct-ico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:var(--navy-50);color:var(--navy-600)}
-.card-t .ct-ico svg{width:18px;height:18px}
+.card-t .ct-ico{font-size:1.1rem}
 
 /* ===== STATS ===== */
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
@@ -233,7 +222,6 @@ body{
 .tg-esc{background:var(--red-bg);color:var(--red);font-weight:700}
 .tg-media{background:var(--purple-bg);color:var(--purple)}
 .tg-rep{background:#dbeafe;color:#1e40af;font-weight:700}
-.tg svg{display:inline-block;vertical-align:-2px;width:14px;height:14px;flex-shrink:0;margin-right:2px}
 
 /* Detail rows */
 .dl{margin-top:14px}
@@ -284,8 +272,7 @@ body{
   display:flex;align-items:flex-start;gap:14px;
   font-size:.88rem;color:#78350f;line-height:1.6;
 }
-.reminder-ico{flex-shrink:0;margin-top:2px;display:flex;align-items:center;width:24px;height:24px}
-.reminder-ico svg{width:24px;height:24px;stroke:var(--amber)}
+.reminder-ico{font-size:1.6rem;flex-shrink:0;margin-top:2px}
 .rep-banner{
   background:linear-gradient(135deg,#eff6ff,#dbeafe);
   border:1.5px solid var(--blue);border-radius:var(--r-lg);
@@ -426,8 +413,7 @@ body{
   display:flex;align-items:flex-start;gap:14px;
   font-size:.85rem;color:var(--navy-700);line-height:1.6;
 }
-.pwa-banner-ico{flex-shrink:0;margin-top:2px;display:flex;align-items:center;width:24px;height:24px}
-.pwa-banner-ico svg{width:24px;height:24px}
+.pwa-banner-ico{font-size:1.5rem;flex-shrink:0;margin-top:2px}
 .pwa-banner-x{
   border:none;background:none;color:var(--text3);font-size:1.2rem;
   cursor:pointer;padding:4px;margin-left:auto;flex-shrink:0;
@@ -486,8 +472,7 @@ body{
 
 /* ===== EMPTY ===== */
 .empty-state{text-align:center;padding:50px 24px}
-.empty-i{margin-bottom:12px;opacity:.5;display:flex;align-items:center;justify-content:center}
-.empty-i svg{width:48px;height:48px;stroke-width:1.5}
+.empty-i{font-size:3rem;margin-bottom:12px;opacity:.5}
 .empty-t{font-size:.92rem;color:var(--text2);line-height:1.7}
 
 /* ===== WEEKLY SUMMARY ===== */
@@ -525,7 +510,7 @@ body{
   .k-stats{grid-template-columns:1fr 1fr}
 }
 @media(max-width:767px){
-  .tab{font-size:.68rem;padding:8px 3px 6px}.tab .ico svg{width:22px;height:22px}
+  .tab{font-size:.72rem;padding:11px 3px}.tab .ico{font-size:1rem}
   .login-box{padding:36px 24px}.np{width:64px;height:64px;font-size:1.3rem}
   .k-stats{grid-template-columns:1fr}
   .k-highlight{position:static}
@@ -535,8 +520,7 @@ body{
 /* ===== STATS CHARTS ===== */
 .chart-card{background:var(--card);border-radius:var(--r-lg);box-shadow:var(--sh);padding:20px;margin-bottom:16px}
 .chart-card-t{font-size:.95rem;font-weight:700;color:var(--navy-700);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.chart-card-t .ct-ico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;border-radius:8px;background:var(--navy-50);color:var(--navy-600)}
-.chart-card-t .ct-ico svg{width:18px;height:18px}
+.chart-card-t .ct-ico{font-size:1.1rem}
 
 /* KPI Grid - large readable numbers with accent bar */
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
@@ -553,9 +537,9 @@ body{
 .kpi-sub{font-size:.72rem;color:var(--text3);margin-top:3px;font-weight:500}
 
 /* Vertical bar chart */
-.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:200px;padding:0 4px;border-bottom:2px solid var(--border-lt)}
-.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0;height:100%}
-.vbar-fill{width:100%;max-width:50px;border-radius:5px 5px 0 0;background:var(--blue);transition:height .3s ease;min-height:2px;flex-shrink:0}
+.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:110px;padding:0 4px;border-bottom:2px solid var(--border-lt)}
+.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0}
+.vbar-fill{width:100%;max-width:50px;border-radius:5px 5px 0 0;background:var(--blue);transition:height .3s ease;min-height:2px}
 .vbar-val{font-size:.72rem;font-weight:700;color:var(--navy-700);margin-bottom:3px;font-variant-numeric:tabular-nums}
 .vbar-labels{display:flex;gap:6px;padding:8px 4px 0;justify-content:space-around}
 .vbar-lbl{flex:1;text-align:center;font-size:.68rem;color:var(--text3);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
@@ -615,7 +599,7 @@ body{
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-v{font-size:1.7rem}
   .hbar-label{min-width:80px;max-width:120px;font-size:.78rem}
-  .vbar-wrap{height:180px}
+  .vbar-wrap{height:100px}
   .vbar-lbl{font-size:.6rem}
   .heatmap{gap:3px;font-size:.7rem}
   .hm-cell{padding:6px 2px;min-height:30px;font-size:.7rem}
@@ -636,7 +620,7 @@ body{
 <!-- ===== LOGIN ===== -->
 <div id="loginScreen">
   <div class="login-box">
-    <div class="login-logo" data-icon="shield-check" data-icon-size="32"></div>
+    <div class="login-logo">📋</div>
     <div class="login-title">対面サポート支援システム</div>
     <div class="login-sub">パスコードを入力してください</div>
     <div class="dots" id="dots">
@@ -665,30 +649,32 @@ body{
 <!-- ===== APP ===== -->
 <div id="app">
   <div class="header">
-    <h1><span data-icon="clipboard-list" data-icon-size="20"></span>対面サポート支援</h1>
+    <h1>📋 対面サポート支援</h1>
     <div class="header-r">
       <span class="header-count" id="hCount">0件</span>
+      <span class="header-count" id="syncStatus" style="font-size:.7rem;opacity:.8">---</span>
       <button class="h-btn" onclick="logout()">ログアウト</button>
     </div>
   </div>
 
   <div class="tabs" role="tablist">
-    <button class="tab on" onclick="go('home')" role="tab" aria-selected="true" aria-controls="p-home"><span class="ico" data-icon="home"></span>ホーム</button>
-    <button class="tab" onclick="go('karte')" role="tab" aria-selected="false" aria-controls="p-karte"><span class="ico" data-icon="user"></span>カルテ</button>
-    <button class="tab" onclick="go('search')" role="tab" aria-selected="false" aria-controls="p-search"><span class="ico" data-icon="search"></span>検索</button>
-    <button class="tab" onclick="go('stats')" role="tab" aria-selected="false" aria-controls="p-stats"><span class="ico" data-icon="bar-chart-3"></span>統計</button>
-    <button class="tab" onclick="go('settings')" role="tab" aria-selected="false" aria-controls="p-settings"><span class="ico" data-icon="settings"></span>設定</button>
+    <button class="tab on" onclick="go('home')" role="tab" aria-selected="true" aria-controls="p-home"><span class="ico">🏠</span>ホーム</button>
+    <button class="tab" onclick="go('karte')" role="tab" aria-selected="false" aria-controls="p-karte"><span class="ico">👤</span>カルテ</button>
+    <button class="tab" onclick="go('search')" role="tab" aria-selected="false" aria-controls="p-search"><span class="ico">🔍</span>検索</button>
+    <button class="tab" onclick="go('stats')" role="tab" aria-selected="false" aria-controls="p-stats"><span class="ico">📊</span>統計</button>
+    <button class="tab" onclick="go('settings')" role="tab" aria-selected="false" aria-controls="p-settings"><span class="ico">⚙️</span>設定</button>
   </div>
 
   <!-- ===== HOME ===== -->
   <div class="pnl on" id="p-home">
     <div id="nodata" class="empty-state">
-      <div class="empty-i" data-icon="clipboard-list" data-icon-size="48"></div>
-      <p class="empty-t">データを読み込んでいます…</p>
+      <div class="empty-i">📋</div>
+      <p class="empty-t">データがまだありません<br>設定タブからCSVをインポートしてください</p>
+      <button class="btn btn-p" style="margin-top:16px" onclick="go('settings')">CSVインポートへ</button>
     </div>
     <div id="hasdata" style="display:none">
       <div class="pwa-banner" id="pwaBanner" style="display:none">
-        <span class="pwa-banner-ico" data-icon="download"></span>
+        <span class="pwa-banner-ico">📲</span>
         <div>
           <b>ホーム画面に追加してください</b><br>
           Safari下部の <b>共有ボタン（□↑）</b>→「<b>ホーム画面に追加</b>」で、アプリとして使えます。<br>
@@ -697,7 +683,7 @@ body{
         <button class="pwa-banner-x" onclick="dismissPwaBanner()" aria-label="閉じる">×</button>
       </div>
       <div class="reminder">
-        <span class="reminder-ico" data-icon="camera"></span>
+        <span class="reminder-ico">📸</span>
         <div>
           <b>トラブル対応時のリマインド</b><br>
           問題が発生したら<b>スクリーンショット</b>または<b>動画撮影</b>を忘れずに！<br>
@@ -707,7 +693,7 @@ body{
 
       <!-- Quick ID Search -->
       <div class="card">
-        <div class="card-t"><span class="ct-ico" data-icon="search" data-icon-size="20"></span>ユーザーID クイック検索</div>
+        <div class="card-t"><span class="ct-ico">🔎</span>ユーザーID クイック検索</div>
         <div class="sbox">
           <input class="sinput" id="qi" placeholder="ユーザーID（例: 582619058）" inputmode="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="ユーザーID クイック検索">
           <button class="btn btn-p" onclick="quickSearch()">検索</button>
@@ -716,7 +702,7 @@ body{
       </div>
 
       <div class="card">
-        <div class="card-t"><span class="ct-ico" data-icon="calendar" data-icon-size="20"></span>週ごとの対応サマリー</div>
+        <div class="card-t"><span class="ct-ico">📅</span>週ごとの対応サマリー</div>
         <select class="fsel" id="weekSelect" onchange="renderWeeklySummary()" style="margin-bottom:12px"></select>
         <div id="weeklySummary"></div>
       </div>
@@ -724,11 +710,11 @@ body{
       <div class="stats" id="stats"></div>
 
       <div class="card">
-        <div class="card-t"><span class="ct-ico" data-icon="bar-chart-3" data-icon-size="20"></span>よくある相談カテゴリ</div>
+        <div class="card-t"><span class="ct-ico">📊</span>よくある相談カテゴリ</div>
         <div class="qgrid" id="qgrid"></div>
       </div>
       <div class="card">
-        <div class="card-t"><span class="ct-ico" data-icon="clock" data-icon-size="20"></span>最近の対応（直近5件）</div>
+        <div class="card-t"><span class="ct-ico">🕐</span>最近の対応（直近5件）</div>
         <div id="recent"></div>
       </div>
     </div>
@@ -738,7 +724,7 @@ body{
   <div class="pnl" id="p-karte">
     <div id="karteInit">
       <div class="karte-search-wrap">
-        <div style="margin-bottom:8px;color:var(--text3)" data-icon="user" data-icon-size="40"></div>
+        <div style="font-size:1.5rem;margin-bottom:8px">👤</div>
         <div style="font-size:1.1rem;font-weight:700;color:var(--navy-700);margin-bottom:16px">ユーザーカルテ</div>
         <input class="sinput sinput-lg" id="karteId" placeholder="ユーザーIDを入力" inputmode="tel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="カルテ用ユーザーID">
         <button class="btn btn-p btn-bl" style="margin-top:12px;max-width:480px" onclick="var v=document.getElementById('karteId').value.trim();if(v)showKarte(v);">カルテを表示</button>
@@ -781,9 +767,12 @@ body{
           <select class="fsel" id="fs"><option value="">担当：全て</option></select>
           <select class="fsel" id="fp">
             <option value="">期間：全て</option>
-            <option value="latest">今回</option>
             <option value="week">今週</option>
             <option value="1">今月</option>
+            <option value="last">先月</option>
+            <option value="3">過去3ヶ月</option>
+            <option value="6">過去6ヶ月</option>
+            <option value="year">今年</option>
             <option value="custom">日付を指定</option>
           </select>
           <select class="fsel" id="fe">
@@ -805,7 +794,7 @@ body{
       <button class="btn btn-sm btn-g" onclick="clearResults()">クリア</button>
     </div>
     <div id="sr" aria-live="polite"></div>
-    <div id="se" class="empty-state"><div class="empty-i" data-icon="search" data-icon-size="48"></div><p class="empty-t">上の検索欄に条件を入力して検索してください</p></div>
+    <div id="se" class="empty-state"><div class="empty-i">🔍</div><p class="empty-t">上の検索欄に条件を入力して検索してください</p></div>
     <div id="smore" style="display:none;text-align:center;margin-top:14px">
       <button class="btn btn-g" onclick="showMore()">もっと見る</button>
     </div>
@@ -815,7 +804,7 @@ body{
   <div class="pnl" id="p-stats">
     <div style="font-size:1.1rem;font-weight:700;color:var(--navy-700);margin-bottom:18px">統計ダッシュボード</div>
     <div id="statsContent">
-      <div class="empty-state"><div class="empty-i" data-icon="bar-chart-3" data-icon-size="48"></div><p class="empty-t">データを読み込み中...</p></div>
+      <div class="empty-state"><div class="empty-i">📊</div><p class="empty-t">データを読み込み中...</p></div>
     </div>
   </div>
 
@@ -823,14 +812,37 @@ body{
   <div class="pnl" id="p-settings">
     <div style="font-size:1.1rem;font-weight:700;color:var(--navy-700);margin-bottom:18px">データ管理</div>
     <div class="pwa-notice">
-      <b><span data-icon="lightbulb" data-icon-size="18" style="display:inline-flex;vertical-align:-3px;margin-right:4px"></span>ホーム画面への追加を推奨</b>
+      <b>💡 ホーム画面への追加を推奨</b>
       Safari → 共有ボタン → 「ホーム画面に追加」でアプリとして利用できます。<br>
       データの長期保持にも効果的です。
     </div>
     <div class="scard">
-      <div class="scard-t">データについて</div>
-      <div class="scard-d">ログイン時にサーバーから最新データを自動取得します。<br>データ更新は <code>update_taimen.py</code> で実施してください。</div>
+      <div class="scard-t">データ同期</div>
+      <div class="scard-d">サーバーから最新データを取得します。通常はページ読み込み時に自動同期されます。</div>
+      <button class="btn btn-p btn-bl" onclick="fetchLatestData()">今すぐ同期</button>
+      <div class="scard-m" id="syncInfo">最終同期: ---</div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">CSVインポート（手動）</div>
+      <div class="scard-d">ネットワーク接続がない場合やCSVファイルを直接読み込みたい場合に使用します。</div>
+      <input type="file" id="cf" accept=".csv" style="display:none" onchange="importCSV(this)">
+      <button class="btn btn-p btn-bl" onclick="document.getElementById('cf').click()">CSVファイルを選択</button>
       <div class="scard-m" id="im">現在: 0件</div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">CSVエクスポート</div>
+      <div class="scard-d">バックアップ用にCSVファイルをダウンロードします。定期的な保存を推奨します。</div>
+      <button class="btn btn-ok btn-bl" onclick="exportCSV()">CSVをエクスポート</button>
+    </div>
+    <div class="scard">
+      <div class="scard-t">ストレージ使用量</div>
+      <div class="scard-m" id="sto">計算中...</div>
+      <div class="sbar"><div class="sbar-f" id="sbf" style="width:0%"></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-t" style="color:var(--red)">⚠️ データ削除</div>
+      <div class="scard-d">すべてのデータを削除します。この操作は元に戻せません。</div>
+      <button class="btn btn-d btn-bl" onclick="nukeData()">すべて削除</button>
     </div>
     <div style="text-align:center;color:var(--text3);font-size:.75rem;margin-top:24px;line-height:1.8">
       対面サポート支援システム v4.0<br>
@@ -862,10 +874,12 @@ var CONFIG = {
   passcodeLength: 6,
   verifyData: 'omwlxAe5TKyNT0V74Sk911ComHuw8Gk2Td1r5bk5ISOOg6xdBMShAAiyRZpnpjWLsVsjl+sE',
   verifyPlaintext: 'TAIMEN_SUPPORT_VERIFIED_OK',
+  storageKey: 'taimen_v3',
   sessionKey: 'taimen_session',
   passcodeKey: 'taimen_pc',
   pageSize: 50,
   dataUrl: 'data.enc',
+  syncKey: 'taimen_last_sync',
   pbkdf2Salt: 'taimen_support_v4_salt_2026',
   pbkdf2Iterations: 100000,
   karteHistoryMax: 20,
@@ -875,59 +889,9 @@ var CONFIG = {
   topCategoryDisplay: 8,
   weeklySummaryWeeks: 8,
   toastDuration: 3500,
-  similarCasesMax: 3
+  similarCasesMax: 3,
+  storageLimitBytes: 5 * 1024 * 1024
 };
-
-// ===== SF Symbols風 ICONS (inline SVG) =====
-// outline = 通常表示用、filled = タブ選択時用
-var ICONS = {
-  'home': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
-  'home-filled': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12.707 2.293a1 1 0 0 0-1.414 0l-7 7A2 2 0 0 0 3 10.914V20a2 2 0 0 0 2 2h4a1 1 0 0 0 1-1v-7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 0 1 1h4a2 2 0 0 0 2-2v-9.086a2 2 0 0 0-.586-1.414z"/></svg>',
-  'user': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
-  'user-filled': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a.5.5 0 0 1-.5-.5V19a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1.5a.5.5 0 0 1-.5.5z"/></svg>',
-  'search': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.34-4.34"/></svg>',
-  'search-filled': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M11 2a9 9 0 0 1 6.32 15.406l4.387 4.387a1 1 0 0 1-1.414 1.414l-4.387-4.387A9 9 0 1 1 11 2m0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14m0 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10"/></svg>',
-  'bar-chart-3': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
-  'bar-chart-3-filled': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 3a1 1 0 0 1 2 0v15h16a1 1 0 1 1 0 2H5a2 2 0 0 1-2-2zm14 5a2 2 0 0 1 2 2v7h-4v-7a2 2 0 0 1 2-2m-5-4a2 2 0 0 1 2 2v11H10V6a2 2 0 0 1 2-2m-5 8a2 2 0 0 1 2 2v3H5v-3a2 2 0 0 1 2-2"/></svg>',
-  'settings': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2"/><circle cx="12" cy="12" r="3"/></svg>',
-  'settings-filled': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6"/></svg>',
-  'clipboard-list': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>',
-  'shield-check': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
-  'download': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>',
-  'camera': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>',
-  'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
-  'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
-  'repeat': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>',
-  'zap': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>',
-  'trending-up': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg>',
-  'user-plus': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>',
-  'map-pin': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>',
-  'timer': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>',
-  'smartphone': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
-  'users': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>',
-  'calendar-days': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>',
-  'lightbulb': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
-  'alert-triangle': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
-  'search-x': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m13.5 8.5-5 5"/><path d="m8.5 8.5 5 5"/><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>'
-};
-
-function icon(name, size) {
-  var svg = ICONS[name] || '';
-  if (!svg) return '';
-  if (size && size !== 24) {
-    svg = svg.replace('width="24"', 'width="' + size + '"').replace('height="24"', 'height="' + size + '"');
-  }
-  return svg;
-}
-
-function initIcons() {
-  var els = document.querySelectorAll('[data-icon]');
-  for (var i = 0; i < els.length; i++) {
-    var name = els[i].getAttribute('data-icon');
-    var size = parseInt(els[i].getAttribute('data-icon-size') || '24');
-    els[i].innerHTML = icon(name, size);
-  }
-}
 
 // ===== STATE =====
 var STATE = {
@@ -1088,9 +1052,6 @@ function extractKeywords(text) {
   return found;
 }
 
-var _similarCache = {};
-var _similarCacheSize = 0;
-
 function findSimilarCases(rec, maxResults) {
   maxResults = maxResults || CONFIG.similarCasesMax;
   if (!rec || !rec.complaint) return [];
@@ -1131,12 +1092,10 @@ function findSimilarCases(rec, maxResults) {
 }
 
 function renderSimilarCases(rec) {
-  var cacheKey = rec.date + '|' + rec.startTime + '|' + rec.no;
-  if (_similarCache[cacheKey] && _similarCacheSize === STATE.data.length) return _similarCache[cacheKey];
   var similar = findSimilarCases(rec);
   if (similar.length === 0) return '';
   var html = '<div class="sim-cases">';
-  html += '<div class="sim-cases-t">' + icon('lightbulb', 18) + ' 類似事例（' + similar.length + '件）</div>';
+  html += '<div class="sim-cases-t">💡 類似事例（' + similar.length + '件）</div>';
   similar.forEach(function(entry) {
     var r = entry.record;
     var idx = entry.index;
@@ -1153,8 +1112,6 @@ function renderSimilarCases(rec) {
     html += '</div>';
   });
   html += '</div>';
-  _similarCache[cacheKey] = html;
-  _similarCacheSize = STATE.data.length;
   return html;
 }
 
@@ -1212,7 +1169,6 @@ function csvToRecords(csvText) {
     if (!date || date === 'nan') continue;
     var userId = get('UserID');
     if (['以下、余白', 'nan', '以下余白', '項番'].some(function(v) { return userId.indexOf(v) !== -1; })) userId = '';
-    if (['未確認', '確認漏れ', '失念', '未登録', '不明'].some(function(v) { return userId === v; })) userId = '';
     var rec = {
       no: get('No'),
       date: date,
@@ -1239,7 +1195,59 @@ function csvToRecords(csvText) {
 }
 
 // ===== DATA MANAGEMENT =====
-// サーバーから毎回最新データを取得する方式（localStorageキャッシュなし）
+function loadData() {
+  try {
+    var raw = localStorage.getItem(CONFIG.storageKey);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      STATE.data = parsed.records || [];
+    }
+  } catch (e) {
+    STATE.data = [];
+    console.error('loadData error:', e);
+    toast('データの読み込みに失敗しました', 'er');
+  }
+  buildUserIndex();
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify({
+      version: 4,
+      timestamp: new Date().toISOString(),
+      count: STATE.data.length,
+      records: STATE.data
+    }));
+  } catch (e) {
+    console.error('saveData error:', e);
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      toast('ストレージ容量不足です。設定画面でデータをエクスポートしてください', 'er');
+    } else {
+      toast('データの保存に失敗しました', 'er');
+    }
+  }
+}
+
+function mergeData(newRecords) {
+  var existingKeys = {};
+  STATE.data.forEach(function(r) {
+    existingKeys[r.date + '|' + r.startTime + '|' + r.userId + '|' + r.no] = true;
+  });
+  var added = 0;
+  for (var i = 0; i < newRecords.length; i++) {
+    var rec = newRecords[i];
+    var key = rec.date + '|' + rec.startTime + '|' + rec.userId + '|' + rec.no;
+    if (!existingKeys[key]) {
+      STATE.data.push(rec);
+      existingKeys[key] = true;
+      added++;
+    }
+  }
+  STATE.data.sort(compareByDateDesc);
+  saveData();
+  buildUserIndex();
+  return { added: added, skipped: newRecords.length - added };
+}
 
 // ===== CRYPTO: PBKDF2 + AES-GCM =====
 function deriveKey(passcode) {
@@ -1275,8 +1283,8 @@ function decryptData(key, b64Data) {
 
 function fetchLatestData() {
   if (!STATE.cryptoKey) return;
-  var hCount = document.getElementById('hCount');
-  if (hCount) hCount.textContent = '読込中...';
+  var syncIndicator = document.getElementById('syncStatus');
+  if (syncIndicator) syncIndicator.textContent = '同期中...';
 
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
@@ -1292,12 +1300,21 @@ function fetchLatestData() {
     })
     .then(function(csvText) {
       var records = csvToRecords(csvText);
-      if (!records.length) { toast('有効なレコードがありません', 'i'); return; }
-      STATE.data = records;
-      STATE.data.sort(compareByDateDesc);
-      buildUserIndex();
-      toast(records.length + '件のデータを読み込みました', 'ok');
-      refreshAll();
+      if (!records.length) { toast('復号成功、有効レコードなし', 'i'); return; }
+      var before = STATE.data.length;
+      var result = mergeData(records);
+      var now = new Date().toISOString();
+      localStorage.setItem(CONFIG.syncKey, now);
+      if (syncIndicator) syncIndicator.textContent = '最終同期: ' + formatSyncTime(now);
+      if (result.added > 0) {
+        toast('サーバーから' + result.added + '件の新規データを取得（合計' + STATE.data.length + '件）', 'ok');
+        refreshAll();
+      } else if (before === 0) {
+        toast(records.length + '件のデータを読み込みました', 'ok');
+        refreshAll();
+      } else {
+        toast('データは最新です（' + STATE.data.length + '件）', 'i');
+      }
     })
     .catch(function(err) {
       clearTimeout(timeoutId);
@@ -1305,14 +1322,28 @@ function fetchLatestData() {
       if (err.name === 'AbortError') {
         toast('データ取得がタイムアウトしました', 'er');
       } else if (msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('NetworkError') !== -1 || msg.indexOf('HTTP') !== -1) {
-        toast('ネットワーク接続を確認してください', 'er');
+        if (STATE.data.length > 0) {
+          toast('オフラインモード: 前回のデータを表示中', 'i');
+        } else {
+          toast('ネットワーク接続を確認してください', 'er');
+        }
       } else if (msg.indexOf('OperationError') !== -1) {
         toast('復号に失敗しました（パスコード不一致またはデータ破損）', 'er');
       } else {
         toast('データ取得に失敗: ' + msg.substring(0, 50), 'er');
+        console.error('fetchLatestData error:', err);
       }
-      if (hCount) hCount.textContent = '取得失敗';
+      var lastSync = localStorage.getItem(CONFIG.syncKey);
+      if (syncIndicator && lastSync) syncIndicator.textContent = '最終同期: ' + formatSyncTime(lastSync);
+      else if (syncIndicator) syncIndicator.textContent = '未同期';
     });
+}
+
+function formatSyncTime(isoStr) {
+  try {
+    var d = new Date(isoStr);
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  } catch(e) { return isoStr; }
 }
 
 // ===== REPEATER DETECTION =====
@@ -1339,7 +1370,6 @@ function getRepeatUsers() {
 
 // ===== USER INDEX (PERFORMANCE) =====
 function buildUserIndex() {
-  _similarCache = {}; _similarCacheSize = 0;
   STATE.userIndex = {};
   STATE.userRecords = {};
   for (var i = 0; i < STATE.data.length; i++) {
@@ -1374,7 +1404,7 @@ function buildKarte(userId) {
   records.forEach(function(r) {
     categories[r.category] = (categories[r.category] || 0) + 1;
     if (r.staff) {
-      r.staff.split(/[,、]/).forEach(function(s) {
+      r.staff.split(',').forEach(function(s) {
         var name = s.trim();
         if (name && name !== 'nan') staffCounts[name] = (staffCounts[name] || 0) + 1;
       });
@@ -1455,7 +1485,7 @@ function renderKarte(kd) {
   if (kd.gender && kd.gender !== 'nan') h += '<span>' + escHtml(kd.gender) + '</span>';
   h += '</div>';
   h += '<div class="k-hl-tags">';
-  h += '<span class="k-hl-tag">' + icon('repeat', 14) + ' 来訪' + kd.visitCount + '回目</span>';
+  h += '<span class="k-hl-tag">🔄 来訪' + kd.visitCount + '回目</span>';
   h += '<span class="k-hl-tag">初回: ' + formatDate(kd.firstVisit) + '</span>';
   h += '<span class="k-hl-tag">最終: ' + formatDate(kd.lastVisit) + '</span>';
   // Category tags (top 3)
@@ -1464,22 +1494,22 @@ function renderKarte(kd) {
     h += '<span class="k-hl-tag">' + escHtml(e[0]) + ':' + e[1] + '</span>';
   });
   if (kd.escalationCount > 0) {
-    h += '<span class="k-hl-tag esc">' + icon('zap', 14) + ' エスカレ ' + kd.escalationCount + '件</span>';
+    h += '<span class="k-hl-tag esc">⚡エスカレ ' + kd.escalationCount + '件</span>';
   }
   h += '</div></div>';
 
   // Previous visit card (most prominent)
   var prev = kd.latestRecord;
   h += '<div class="k-prev">';
-  h += '<div class="k-prev-t">' + icon('clipboard-list', 18) + ' 前回の対応</div>';
+  h += '<div class="k-prev-t">📋 前回の対応</div>';
   h += '<div class="k-prev-cat">' + formatDate(prev.date) + ' ' + escHtml(prev.category) + '</div>';
   h += '<div class="k-prev-staff">担当: ' + escHtml(prev.staff || '記録なし') + (prev.duration ? ' | 対応時間: ' + escHtml(prev.duration) : '') + '</div>';
   var prevText = '';
   if (prev.complaint) prevText += maskName(prev.complaint);
   if (prev.response) prevText += '\n→ ' + maskName(prev.response);
   h += '<div class="k-prev-body">' + escHtml(prevText) + '</div>';
-  if (hasEscalation(prev)) h += '<div style="margin-top:8px"><span class="tg tg-esc">' + icon('zap', 14) + 'エスカレ</span></div>';
-  if (hasMediaCapture(prev)) h += '<div style="margin-top:4px"><span class="tg tg-media">' + icon('camera', 14) + '撮影あり</span></div>';
+  if (hasEscalation(prev)) h += '<div style="margin-top:8px"><span class="tg tg-esc">⚡エスカレ</span></div>';
+  if (hasMediaCapture(prev)) h += '<div style="margin-top:4px"><span class="tg tg-media">📸撮影あり</span></div>';
   h += '</div>';
 
   // Stats row (2 columns)
@@ -1509,7 +1539,7 @@ function renderKarte(kd) {
   h += '</div></div>';
 
   // Timeline
-  h += '<div class="card"><div class="card-t"><span class="ct-ico">' + icon('calendar', 20) + '</span>対応タイムライン</div>';
+  h += '<div class="card"><div class="card-t"><span class="ct-ico">📅</span>対応タイムライン</div>';
   h += '<div class="tl">';
   kd.records.forEach(function(rec, idx) {
     var esc = hasEscalation(rec);
@@ -1520,8 +1550,8 @@ function renderKarte(kd) {
     h += '<span class="tl-arrow">▶</span> ';
     h += '<span class="tl-date">' + formatDate(rec.date) + '</span> ';
     h += '<span class="tg tg-ct" style="margin-left:4px">' + escHtml(rec.category) + '</span> ';
-    if (esc) h += '<span class="tg tg-esc" style="margin-left:2px">' + icon('zap', 14) + 'エスカレ</span> ';
-    if (media) h += '<span class="tg tg-media" style="margin-left:2px">' + icon('camera', 14) + '</span> ';
+    if (esc) h += '<span class="tg tg-esc" style="margin-left:2px">⚡エスカレ</span> ';
+    if (media) h += '<span class="tg tg-media" style="margin-left:2px">📸</span> ';
     if (rec.staff) h += '<span style="font-size:.82rem;color:var(--text2);margin-left:auto">担当: ' + escHtml(rec.staff) + '</span>';
     h += '</div>';
     h += '<div class="tl-body">';
@@ -1543,9 +1573,17 @@ function renderKarte(kd) {
 function showKarte(userId) {
   if (!userId) return;
   var cleanId = userId.replace(/[-\s]/g, '');
-  // Exact match only (after removing hyphens/spaces)
+  // Find exact match first, then partial
   var exactRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '') === cleanId; });
   var targetId = exactRecs.length > 0 ? exactRecs[0].userId : null;
+
+  if (!targetId) {
+    // Partial match
+    var partialRecs = STATE.data.filter(function(r) { return r.userId.replace(/[-\s]/g, '').indexOf(cleanId) !== -1; });
+    if (partialRecs.length > 0) {
+      targetId = partialRecs[0].userId;
+    }
+  }
 
   if (!targetId) {
     toast('該当するユーザーが見つかりません', 'i');
@@ -1592,7 +1630,7 @@ function renderKarteInit() {
   // Recent searches
   var recentDiv = document.getElementById('karteRecent');
   if (STATE.karteHistory.length > 0) {
-    var rh = '<div class="card"><div class="card-t"><span class="ct-ico">' + icon('clock', 20) + '</span>最近検索したユーザー</div>';
+    var rh = '<div class="card"><div class="card-t"><span class="ct-ico">🕐</span>最近検索したユーザー</div>';
     STATE.karteHistory.slice(0, 8).forEach(function(uid) {
       var recs = STATE.data.filter(function(r) { return r.userId === uid; });
       if (!recs.length) return;
@@ -1612,7 +1650,7 @@ function renderKarteInit() {
   var repDiv = document.getElementById('karteRepeaters');
   var repeaters = getRepeatUsers();
   if (repeaters.length > 0) {
-    var rp = '<div class="card"><div class="card-t"><span class="ct-ico">' + icon('repeat', 20) + '</span>リピーター一覧（' + repeaters.length + '名）</div>';
+    var rp = '<div class="card"><div class="card-t"><span class="ct-ico">🔄</span>リピーター一覧（' + repeaters.length + '名）</div>';
     repeaters.slice(0, 15).forEach(function(entry) {
       var uid = entry[0];
       var count = entry[1];
@@ -1640,16 +1678,8 @@ function toggleTl(idx) {
 
 // ===== LOGIN =====
 var passcodeInput = '';
-var passcodeFailCount = 0;
-var passcodeLockUntil = 0;
-var passcodeLockTimer = null;
 
 function nd(digit) {
-  if (passcodeLockUntil > Date.now()) {
-    var sec = Math.ceil((passcodeLockUntil - Date.now()) / 1000);
-    document.getElementById('lerr').textContent = 'ロック中（' + sec + '秒後に再試行できます）';
-    return;
-  }
   if (passcodeInput.length >= CONFIG.passcodeLength) return;
   passcodeInput += digit;
   updateDots();
@@ -1657,7 +1687,6 @@ function nd(digit) {
 }
 
 function ndel() {
-  if (passcodeLockUntil > Date.now()) return;
   passcodeInput = passcodeInput.slice(0, -1);
   updateDots();
   document.getElementById('lerr').textContent = '';
@@ -1679,7 +1708,6 @@ function checkPasscode() {
   deriveKey(entered).then(function(key) {
     return decryptData(key, CONFIG.verifyData).then(function(plaintext) {
       if (plaintext === CONFIG.verifyPlaintext) {
-        passcodeFailCount = 0;
         STATE.cryptoKey = key;
         sessionStorage.setItem(CONFIG.sessionKey, '1');
         showApp();
@@ -1688,44 +1716,27 @@ function checkPasscode() {
       }
     });
   }).catch(function() {
-    passcodeFailCount++;
     for (var i = 0; i < CONFIG.passcodeLength; i++) {
       var dot = document.getElementById('d' + i);
       if (dot) dot.classList.add('err');
     }
-    if (passcodeFailCount >= 5) {
-      passcodeLockUntil = Date.now() + 30000;
-      document.getElementById('lerr').textContent = 'ロック中（30秒後に再試行できます）';
-      var numpadBtns = document.querySelectorAll('.numpad .np');
-      for (var j = 0; j < numpadBtns.length; j++) numpadBtns[j].disabled = true;
-      if (passcodeLockTimer) clearInterval(passcodeLockTimer);
-      passcodeLockTimer = setInterval(function() {
-        var remaining = Math.ceil((passcodeLockUntil - Date.now()) / 1000);
-        if (remaining <= 0) {
-          clearInterval(passcodeLockTimer);
-          passcodeLockTimer = null;
-          passcodeFailCount = 0;
-          document.getElementById('lerr').textContent = '';
-          var btns = document.querySelectorAll('.numpad .np');
-          for (var k = 0; k < btns.length; k++) btns[k].disabled = false;
-        } else {
-          document.getElementById('lerr').textContent = 'ロック中（' + remaining + '秒後に再試行できます）';
-        }
-      }, 1000);
-      setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
-    } else {
-      document.getElementById('lerr').textContent = 'パスコードが違います（残り' + (5 - passcodeFailCount) + '回）';
-      setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
-    }
+    document.getElementById('lerr').textContent = 'パスコードが違います';
+    setTimeout(function() { passcodeInput = ''; updateDots(); }, 600);
   });
 }
 
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  loadData();
+  refreshAll();
+  // sessionStorageにパスコードは保存しない（セキュリティ対策）
+  // CryptoKeyが既にSTATEにあればそれを使う、なければfetchしない
   if (STATE.cryptoKey) {
     fetchLatestData();
   }
+  // CryptoKeyがない場合（ページリロード後）は再ログインが必要
+  // localStorageのキャッシュデータは上のloadData()で表示済み
 }
 
 function logout() {
@@ -1736,6 +1747,58 @@ function logout() {
   passcodeInput = '';
   updateDots();
   document.getElementById('lerr').textContent = '';
+}
+
+// ===== FILE OPERATIONS =====
+function importCSV(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var records = csvToRecords(e.target.result);
+      if (!records.length) { toast('有効なレコードが見つかりません', 'er'); return; }
+      var result = mergeData(records);
+      toast(result.added + '件追加（' + result.skipped + '件はスキップ）合計' + STATE.data.length + '件', 'ok');
+      refreshAll();
+    } catch (err) {
+      toast('読み込みに失敗しました: ' + err.message, 'er');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+  input.value = '';
+}
+
+function exportCSV() {
+  if (!STATE.data.length) { toast('データがありません', 'er'); return; }
+  var headers = ['No','日付','開始時間','終了時間','対応時間','UserID','機種','性別','相談内容','対応内容','特記事項','担当','場所','インポート日'];
+  var esc = function(s) { return '"' + (s || '').replace(/"/g, '""') + '"'; };
+  var lines = [headers.join(',')];
+  for (var i = 0; i < STATE.data.length; i++) {
+    var r = STATE.data[i];
+    lines.push([
+      esc(r.no), esc(r.date), esc(r.startTime), esc(r.endTime), esc(r.duration),
+      esc(r.userId), esc(r.device), esc(r.gender),
+      esc(r.complaint), esc(r.response), esc(r.notes),
+      esc(r.staff), esc(r.location), esc(r.importDate)
+    ].join(','));
+  }
+  var blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'taimen_backup_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('エクスポートが完了しました', 'ok');
+}
+
+function nukeData() {
+  if (!confirm('すべてのデータを削除しますか？\nこの操作は元に戻せません。')) return;
+  if (!confirm('本当に削除してよろしいですか？\n（最終確認）')) return;
+  STATE.data = [];
+  localStorage.removeItem(CONFIG.storageKey);
+  refreshAll();
+  toast('すべてのデータを削除しました', 'i');
 }
 
 // ===== SEARCH =====
@@ -1758,7 +1821,7 @@ function doSearch() {
     var val = (document.getElementById('si-uid').value || '').trim().replace(/[-\s]/g, '');
     if (!val) { toast('ユーザーIDを入力してください', 'i'); return; }
     STATE.results = STATE.data.filter(function(r) {
-      return (r.userId || '').replace(/[-\s]/g, '') === val;
+      return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1;
     });
   } else if (mode === 'dev') {
     var val2 = (document.getElementById('si-dev').value || '').trim().toLowerCase();
@@ -1792,10 +1855,7 @@ function doSearch() {
         var now = new Date();
         var y = now.getFullYear();
         var m = String(now.getMonth() + 1).padStart(2, '0');
-        if (periodFilter === 'latest') {
-          var latestD = STATE.data[0] ? STATE.data[0].date : '';
-          if (rd !== latestD) return false;
-        } else if (periodFilter === 'custom') {
+        if (periodFilter === 'custom') {
           var fromDate = document.getElementById('si-from').value;
           var toDate = document.getElementById('si-to').value;
           if (fromDate && rd < fromDate) return false;
@@ -1806,9 +1866,25 @@ function doSearch() {
           sw.setDate(now.getDate() - dayOfWeek + 1);
           var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
           if (rd < startWeek) return false;
-        } else if (periodFilter === '1') {
-          var startMonth = y + '-' + m + '-01';
-          if (rd < startMonth) return false;
+        } else if (periodFilter === 'last') {
+          var slm = new Date(y, now.getMonth() - 1, 1);
+          var elm = new Date(y, now.getMonth(), 0);
+          var startLast = slm.getFullYear() + '-' + String(slm.getMonth() + 1).padStart(2, '0') + '-01';
+          var endLast = elm.getFullYear() + '-' + String(elm.getMonth() + 1).padStart(2, '0') + '-' + String(elm.getDate()).padStart(2, '0');
+          if (rd < startLast || rd > endLast) return false;
+        } else if (periodFilter === 'year') {
+          if (rd.indexOf(String(y)) !== 0) return false;
+        } else {
+          var months = parseInt(periodFilter);
+          if (months === 1) {
+            var startMonth = y + '-' + m + '-01';
+            if (rd < startMonth) return false;
+          } else {
+            var sm = new Date(now);
+            sm.setMonth(sm.getMonth() - months);
+            var startStr = sm.getFullYear() + '-' + String(sm.getMonth() + 1).padStart(2, '0') + '-' + String(sm.getDate()).padStart(2, '0');
+            if (rd < startStr) return false;
+          }
         }
       }
       if (escFilter === 'yes' && !hasEscalation(r)) return false;
@@ -1825,7 +1901,7 @@ function quickSearch() {
   var val = (document.getElementById('qi').value || '').trim().replace(/[-\s]/g, '');
   if (!val) return;
   var results = STATE.data
-    .filter(function(r) { return (r.userId || '').replace(/[-\s]/g, '') === val; })
+    .filter(function(r) { return (r.userId || '').replace(/[-\s]/g, '').indexOf(val) !== -1; })
     .sort(compareByDateDesc);
   var box = document.getElementById('qr');
   if (!results.length) {
@@ -1833,17 +1909,15 @@ function quickSearch() {
     return;
   }
   var uid = results[0].userId;
-  var repeatCount = isValidUserId(uid) ? results.length : 0;
+  var repeatCount = results.length;
   var html = '';
   if (repeatCount > 1) {
-    html += '<div class="rep-banner">' + icon('repeat', 16) + ' このユーザーは<b> ' + repeatCount + '回目 </b>のご来店です（初回: ' + formatDate(results[results.length - 1].date) + '）</div>';
+    html += '<div class="rep-banner">🔄 このユーザーは<b> ' + repeatCount + '回目 </b>のご来店です（初回: ' + formatDate(results[results.length - 1].date) + '）</div>';
   }
   html += '<p style="font-size:.88rem;color:var(--text2);margin-bottom:10px"><b>' + results.length + '件</b>の対応履歴</p>';
   var toShowQs = results.slice(0, 5);
-  var idxMapQs = new Map();
-  for (var mi = 0; mi < STATE.data.length; mi++) idxMapQs.set(STATE.data[mi], mi);
   for (var qi = 0; qi < toShowQs.length; qi++) {
-    html += renderRecordCard(toShowQs[qi], idxMapQs.get(toShowQs[qi]) || 0);
+    html += renderRecordCard(toShowQs[qi], STATE.data.indexOf(toShowQs[qi]));
   }
   html += '<div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center">';
   if (results.length > 5) {
@@ -1934,9 +2008,9 @@ function renderRecordCard(rec, idx) {
     '<span class="tg tg-dv">' + escHtml(rec.deviceSimple || '不明') + '</span>' +
     '<span class="tg tg-ct">' + escHtml(rec.category) + '</span>' +
     (rec.staff ? '<span class="tg tg-st">' + escHtml(rec.staff) + '</span>' : '') +
-    (esc ? '<span class="tg tg-esc">' + icon('zap', 14) + 'エスカレ</span>' : '') +
-    (media ? '<span class="tg tg-media">' + icon('camera', 14) + '撮影あり</span>' : '') +
-    (repeat > 1 ? '<span class="tg tg-rep">' + icon('repeat', 14) + repeat + '回目</span>' : '') +
+    (esc ? '<span class="tg tg-esc">⚡エスカレ</span>' : '') +
+    (media ? '<span class="tg tg-media">📸撮影あり</span>' : '') +
+    (repeat > 1 ? '<span class="tg tg-rep">🔄' + repeat + '回目</span>' : '') +
     '</div>' +
     '<div class="rc-sum">' + escHtml(summary) + '</div>' +
     '</div>' +
@@ -1958,7 +2032,7 @@ function renderResults() {
   var seDiv = document.getElementById('se');
   var moreDiv = document.getElementById('smore');
   if (!STATE.results.length) {
-    srDiv.innerHTML = '<div class="empty-state"><div class="empty-i">' + icon('search-x', 48) + '</div><p class="empty-t">該当するレコードがありません</p></div>';
+    srDiv.innerHTML = '<div class="empty-state"><div class="empty-i">😞</div><p class="empty-t">該当するレコードがありません</p></div>';
     riDiv.style.display = 'none';
     seDiv.style.display = 'none';
     moreDiv.style.display = 'none';
@@ -1971,7 +2045,7 @@ function renderResults() {
   if (STATE.searchMode === 'uid' && STATE.results.length > 1) {
     var uid = STATE.results[0].userId;
     if (uid && uid !== '未確認') {
-      repBanner = '<div class="rep-banner">' + icon('repeat', 16) + ' このユーザーは<b> ' + STATE.results.length + '回 </b>ご来店されています' +
+      repBanner = '<div class="rep-banner">🔄 このユーザーは<b> ' + STATE.results.length + '回 </b>ご来店されています' +
         '（初回: ' + formatDate(STATE.results[STATE.results.length - 1].date) + '）' +
         ' <button class="btn btn-sm btn-p" style="margin-left:10px" onclick="openKarteFromHome(\'' + escAttr(uid) + '\')">カルテを見る</button>' +
         '</div>';
@@ -1979,10 +2053,8 @@ function renderResults() {
   }
   var html = repBanner + '<div class="r2c">';
   var toShow = STATE.results.slice(0, STATE.displayCount);
-  var idxMap = new Map();
-  for (var mi = 0; mi < STATE.data.length; mi++) idxMap.set(STATE.data[mi], mi);
   for (var i = 0; i < toShow.length; i++) {
-    html += renderRecordCard(toShow[i], idxMap.get(toShow[i]) || 0);
+    html += renderRecordCard(toShow[i], STATE.data.indexOf(toShow[i]));
   }
   html += '</div>';
   srDiv.innerHTML = html;
@@ -2013,25 +2085,25 @@ function renderHome() {
   document.getElementById('hasdata').style.display = hasData ? 'block' : 'none';
   if (!hasData) return;
 
-  var latestDate = STATE.data[0] ? STATE.data[0].date : '';
-  var latestCount = 0;
+  var now = new Date();
+  var thisYM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var thisMonthCount = 0;
   var catCounts = {};
   var uniqueIds = {};
   var escCount = 0;
 
   for (var i = 0; i < STATE.data.length; i++) {
     var r = STATE.data[i];
-    if (r.date === latestDate) latestCount++;
+    if (r.date && r.date.substring(0, 7) === thisYM) thisMonthCount++;
     catCounts[r.category] = (catCounts[r.category] || 0) + 1;
     if (isValidUserId(r.userId)) uniqueIds[r.userId] = true;
     if (hasEscalation(r)) escCount++;
   }
   var uniqueUsers = Object.keys(uniqueIds).length;
-  var latestLabel = latestDate ? (parseInt(latestDate.substring(5, 7)) + '/' + parseInt(latestDate.substring(8, 10))) : '';
 
   document.getElementById('stats').innerHTML =
     '<div class="st" onclick="go(\'search\')"><div class="st-v">' + STATE.data.length + '</div><div class="st-l">全レコード</div></div>' +
-    '<div class="st" onclick="searchByPeriod(\'latest\')"><div class="st-v">' + latestCount + '</div><div class="st-l">今回 (' + latestLabel + ')</div></div>' +
+    '<div class="st" onclick="searchByPeriod(\'1\')"><div class="st-v">' + thisMonthCount + '</div><div class="st-l">今月の対応</div></div>' +
     '<div class="st"><div class="st-v">' + uniqueUsers + '</div><div class="st-l">ユニークユーザー</div></div>' +
     '<div class="st" onclick="searchByEscalation()"><div class="st-v">' + escCount + '</div><div class="st-l">エスカレ件数</div></div>';
 
@@ -2059,9 +2131,9 @@ function renderHome() {
       '<span class="tg tg-dt">' + formatDate(rc.date) + '</span>' +
       '<span class="tg tg-ct">' + escHtml(rc.category) + '</span>' +
       '<span class="tg tg-id">' + escHtml(rc.userId || '') + '</span>' +
-      (resc ? '<span class="tg tg-esc">' + icon('zap', 14) + 'エスカレ</span>' : '') +
-      (rmedia ? '<span class="tg tg-media">' + icon('camera', 14) + '</span>' : '') +
-      (rrepeat > 1 ? '<span class="tg tg-rep">' + icon('repeat', 14) + rrepeat + '回</span>' : '') +
+      (resc ? '<span class="tg tg-esc">⚡エスカレ</span>' : '') +
+      (rmedia ? '<span class="tg tg-media">📸</span>' : '') +
+      (rrepeat > 1 ? '<span class="tg tg-rep">🔄' + rrepeat + '回</span>' : '') +
       '</div>' +
       '<div style="font-size:.88rem;color:var(--text2);margin-top:4px;line-height:1.5">' + escHtml(maskName(truncate(rc.complaint, 60))) + '</div>' +
       '</div>';
@@ -2123,7 +2195,7 @@ function renderWeeklySummary() {
   var escCount = 0;
   records.forEach(function(r) {
     cats[r.category] = (cats[r.category] || 0) + 1;
-    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) { if (s.trim()) staffSet[s.trim()] = true; });
+    if (r.staff) r.staff.split(',').forEach(function(s) { if (s.trim()) staffSet[s.trim()] = true; });
     if (hasEscalation(r)) escCount++;
   });
   var topCats = Object.keys(cats).sort(function(a, b) { return cats[b] - cats[a]; }).slice(0, 3);
@@ -2135,7 +2207,7 @@ function renderWeeklySummary() {
     html += '<div class="wk-stat-item">担当 <span class="wk-stat-n">' + Object.keys(staffSet).join(', ') + '</span></div>';
   }
   if (escCount > 0) {
-    html += '<div class="wk-stat-item">' + icon('zap', 14) + ' エスカレ <span class="wk-stat-n">' + escCount + '件</span></div>';
+    html += '<div class="wk-stat-item">⚡エスカレ <span class="wk-stat-n">' + escCount + '件</span></div>';
   }
   if (topCats.length > 0) {
     html += '<div class="wk-stat-item">多い相談 <span class="wk-stat-n">' + topCats.map(function(c) { return escHtml(c) + '(' + cats[c] + ')'; }).join(' ') + '</span></div>';
@@ -2150,10 +2222,8 @@ function renderWeeklySummary() {
   html += '</div>';
   html += '<div class="wk-details-body">';
 
-  var idxMapWk = new Map();
-  for (var mi = 0; mi < STATE.data.length; mi++) idxMapWk.set(STATE.data[mi], mi);
   records.forEach(function(r, i) {
-    var idx = idxMapWk.get(r) || 0;
+    var idx = STATE.data.indexOf(r);
     var esc = hasEscalation(r);
     var repeat = getRepeatCount(r.userId);
     html += '<div class="wk-acc">';
@@ -2164,8 +2234,8 @@ function renderWeeklySummary() {
     if (r.userId && isValidUserId(r.userId)) {
       html += '<span style="font-size:.78rem;color:var(--blue);font-family:monospace">' + escHtml(r.userId) + '</span>';
     }
-    if (esc) html += ' <span style="font-size:.75rem;color:var(--red);font-weight:600">' + icon('zap', 14) + 'エスカレ</span>';
-    if (repeat > 1) html += ' <span style="font-size:.75rem;color:var(--purple);font-weight:600">' + icon('repeat', 14) + repeat + '回</span>';
+    if (esc) html += ' <span style="font-size:.75rem;color:var(--red);font-weight:600">⚡エスカレ</span>';
+    if (repeat > 1) html += ' <span style="font-size:.75rem;color:var(--purple);font-weight:600">🔄' + repeat + '回</span>';
     html += '<div class="wk-rec-body">' + escHtml(maskName(truncate(r.complaint, 60))) + '</div>';
     html += '</div>';
     html += '<span class="wk-acc-arrow">▶</span>';
@@ -2206,7 +2276,7 @@ function updateWkToggleLabel() {
 }
 
 // ===== STATS PANEL =====
-var STATS_PERIOD = 'latest';
+var STATS_PERIOD = 'all';
 
 function setStatsPeriod(period) {
   STATS_PERIOD = period;
@@ -2217,19 +2287,15 @@ function getStatsDateRange(period) {
   var now = new Date();
   var y = now.getFullYear();
   var m = now.getMonth();
-  if (period === 'latest') {
-    var latestD = STATE.data[0] ? STATE.data[0].date : '';
-    if (!latestD) return { start: '0000-01-01', end: '9999-12-31', label: '今回' };
-    var lbl = parseInt(latestD.substring(5, 7)) + '/' + parseInt(latestD.substring(8, 10));
-    return { start: latestD, end: latestD, label: '今回 (' + lbl + ')' };
-  }
-  if (period === 'thisWeek') {
-    var dayOfWeek = now.getDay() || 7;
-    var sw = new Date(now); sw.setDate(now.getDate() - dayOfWeek + 1);
-    var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
-    return { start: startWeek, end: '9999-12-31', label: '今週' };
-  }
   if (period === 'thisMonth') return { start: y + '-' + String(m + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: y + '年' + (m + 1) + '月' };
+  if (period === 'lastMonth') {
+    var lm = new Date(y, m - 1, 1);
+    var lme = new Date(y, m, 0);
+    return { start: lm.getFullYear() + '-' + String(lm.getMonth() + 1).padStart(2, '0') + '-01', end: lme.getFullYear() + '-' + String(lme.getMonth() + 1).padStart(2, '0') + '-' + String(lme.getDate()).padStart(2, '0'), label: lm.getFullYear() + '年' + (lm.getMonth() + 1) + '月' };
+  }
+  if (period === '3m') { var s = new Date(y, m - 2, 1); return { start: s.getFullYear() + '-' + String(s.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去3ヶ月' }; }
+  if (period === '6m') { var s6 = new Date(y, m - 5, 1); return { start: s6.getFullYear() + '-' + String(s6.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去6ヶ月' }; }
+  if (period === 'thisYear') return { start: y + '-01-01', end: '9999-12-31', label: y + '年' };
   if (period === 'custom') {
     var from = document.getElementById('stats-from');
     var to = document.getElementById('stats-to');
@@ -2248,7 +2314,7 @@ function renderStatsPanel() {
   var container = document.getElementById('statsContent');
   if (!container) return;
   if (!STATE.data.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-i">' + icon('bar-chart-3', 48) + '</div><p class="empty-t">データがありません</p></div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-i">📊</div><p class="empty-t">データがありません</p></div>';
     return;
   }
 
@@ -2256,9 +2322,9 @@ function renderStatsPanel() {
   var data = filterByPeriod(STATE.data, range);
   var html = '';
 
-  // Period selector - 5 buttons: 今回/今週/今月/全期間/期間指定
+  // Period selector - 5 buttons (reduced from 7: removed lastMonth and 6m)
   html += '<div class="stats-period">';
-  var periods = [['latest','今回'],['thisWeek','今週'],['thisMonth','今月'],['all','全期間'],['custom','期間指定']];
+  var periods = [['thisMonth','今月'],['3m','3ヶ月'],['thisYear','今年'],['all','全期間'],['custom','期間指定']];
   periods.forEach(function(p) {
     html += '<button class="stats-period-btn' + (STATS_PERIOD === p[0] ? ' on' : '') + '" onclick="setStatsPeriod(\'' + p[0] + '\')">' + p[1] + '</button>';
   });
@@ -2280,7 +2346,7 @@ function renderStatsPanel() {
   html += '<div class="stats-period-label">' + escHtml(range.label) + ' &mdash; <span class="stats-period-count">' + data.length + '件</span></div>';
 
   if (!data.length) {
-    html += '<div class="empty-state"><div class="empty-i">' + icon('bar-chart-3', 48) + '</div><p class="empty-t">この期間のデータはありません</p></div>';
+    html += '<div class="empty-state"><div class="empty-i">📭</div><p class="empty-t">この期間のデータはありません</p></div>';
     container.innerHTML = html;
     return;
   }
@@ -2318,7 +2384,7 @@ function renderStatsPanel() {
         else durBuckets[3]++;
       }
     }
-    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) { var t = s.trim(); if (t && t !== 'nan') staffSet[t] = true; });
+    if (r.staff) r.staff.split(',').forEach(function(s) { var t = s.trim(); if (t && t !== 'nan') staffSet[t] = true; });
     var loc = r.location ? r.location.trim() : '';
     if (loc && loc !== 'nan') locationCounts[loc] = (locationCounts[loc] || 0) + 1;
   });
@@ -2354,7 +2420,7 @@ function renderStatsPanel() {
     var newPct = Math.round(newUsers / totalUnique * 100);
     var repPct = 100 - newPct;
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('user-plus', 20) + '</span>新規 vs リピーター</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">🆕</span>新規 vs リピーター</div>';
     html += '<div style="display:flex;gap:16px;margin-bottom:12px">';
     html += '<div style="flex:1;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--blue)">' + newUsers + '<span style="font-size:.85rem;font-weight:600">人</span></div><div style="font-size:.8rem;color:var(--text2);font-weight:500">初回来訪 (' + newPct + '%)</div></div>';
     html += '<div style="flex:1;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--amber)">' + repeatUsers + '<span style="font-size:.85rem;font-weight:600">人</span></div><div style="font-size:.8rem;color:var(--text2);font-weight:500">リピーター (' + repPct + '%)</div></div>';
@@ -2385,7 +2451,7 @@ function renderStatsPanel() {
     var multiYear = Object.keys(yearSet).length > 1;
 
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('trending-up', 20) + '</span>月別対応件数</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">📈</span>月別対応件数</div>';
     html += '<div class="vbar-wrap">';
     monthKeys.forEach(function(ym) {
       var count = monthCounts[ym];
@@ -2415,7 +2481,7 @@ function renderStatsPanel() {
     if (maxEsc === 0) maxEsc = 1;
 
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('zap', 20) + '</span>月別エスカレーション件数</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
     html += '<div class="vbar-wrap">';
     escCounts.forEach(function(val) {
       var pct = maxEsc > 0 ? (val / maxEsc * 100) : 0;
@@ -2444,7 +2510,7 @@ function renderStatsPanel() {
   var colors = ['var(--blue)', 'var(--green)', 'var(--amber)', 'var(--purple)', 'var(--red)', 'var(--navy-500)', '#0891b2', '#be185d', '#4338ca', '#b45309'];
 
   html += '<div class="chart-card">';
-  html += '<div class="chart-card-t"><span class="ct-ico">' + icon('clipboard-list', 20) + '</span>相談カテゴリ別（' + catEntries.length + '種類）</div>';
+  html += '<div class="chart-card-t"><span class="ct-ico">📋</span>相談カテゴリ別（' + catEntries.length + '種類）</div>';
   catEntries.slice(0, 12).forEach(function(e, i) {
     var pct = (e[1] / maxCat * 100);
     var pctLabel = data.length > 0 ? ' (' + Math.round(e[1] / data.length * 100) + '%)' : '';
@@ -2465,7 +2531,7 @@ function renderStatsPanel() {
   if (locEntries.length > 0) {
     var maxLoc = locEntries[0][1];
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('map-pin', 20) + '</span>場所別対応件数</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">📍</span>場所別対応件数</div>';
     locEntries.forEach(function(e, i) {
       var pct = (e[1] / maxLoc * 100);
       var locPctLabel = data.length > 0 ? ' (' + Math.round(e[1] / data.length * 100) + '%)' : '';
@@ -2484,7 +2550,7 @@ function renderStatsPanel() {
     var durColors = ['var(--green)', 'var(--blue)', 'var(--amber)', 'var(--red)'];
     var maxDur = Math.max.apply(null, durBuckets);
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('timer', 20) + '</span>対応時間の分布（' + durCount + '件）</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">⏱</span>対応時間の分布（' + durCount + '件）</div>';
     for (var bi = 0; bi < 4; bi++) {
       var dpct = maxDur > 0 ? (durBuckets[bi] / maxDur * 100) : 0;
       var dratio = durCount > 0 ? ' (' + Math.round(durBuckets[bi] / durCount * 100) + '%)' : '';
@@ -2504,7 +2570,7 @@ function renderStatsPanel() {
   var maxDev = devEntries.length > 0 ? devEntries[0][1] : 1;
 
   html += '<div class="chart-card">';
-  html += '<div class="chart-card-t"><span class="ct-ico">' + icon('smartphone', 20) + '</span>デバイス別</div>';
+  html += '<div class="chart-card-t"><span class="ct-ico">📱</span>デバイス別</div>';
   devEntries.slice(0, 10).forEach(function(e, i) {
     var pct = (e[1] / maxDev * 100);
     html += '<div class="hbar">';
@@ -2518,7 +2584,7 @@ function renderStatsPanel() {
   // === Staff Horizontal Bar ===
   var staffCounts = {};
   data.forEach(function(r) {
-    if (r.staff) r.staff.split(/[,、]/).forEach(function(s) {
+    if (r.staff) r.staff.split(',').forEach(function(s) {
       var t = s.trim();
       if (t && t !== 'nan') staffCounts[t] = (staffCounts[t] || 0) + 1;
     });
@@ -2528,7 +2594,7 @@ function renderStatsPanel() {
 
   if (staffEntries.length > 0) {
     html += '<div class="chart-card">';
-    html += '<div class="chart-card-t"><span class="ct-ico">' + icon('users', 20) + '</span>担当者別対応件数</div>';
+    html += '<div class="chart-card-t"><span class="ct-ico">🧑‍💼</span>担当者別対応件数</div>';
     staffEntries.forEach(function(e, i) {
       var pct = (e[1] / maxStaff * 100);
       html += '<div class="hbar">';
@@ -2574,7 +2640,7 @@ function renderStatsPanel() {
   var hmMax = heatVals.length > 0 ? Math.max.apply(null, heatVals) : 0;
 
   html += '<div class="chart-card">';
-  html += '<div class="chart-card-t"><span class="ct-ico">' + icon('calendar-days', 20) + '</span>曜日 × 時間帯</div>';
+  html += '<div class="chart-card-t"><span class="ct-ico">🗓</span>曜日 × 時間帯</div>';
   html += '<div class="heatmap">';
   // Header row
   html += '<div></div>';
@@ -2612,29 +2678,34 @@ function renderStatsPanel() {
 
 function renderSettings() {
   document.getElementById('im').textContent = '現在: ' + STATE.data.length + '件のレコード';
+  var raw = localStorage.getItem(CONFIG.storageKey) || '';
+  var used = new Blob([raw]).size;
+  var max = CONFIG.storageLimitBytes;
+  var pct = ((used / max) * 100).toFixed(1);
+  document.getElementById('sto').textContent =
+    '使用量: ' + (used / 1024).toFixed(0) + 'KB / ' + (max / 1024).toFixed(0) + 'KB (' + pct + '%)';
+  document.getElementById('sbf').style.width = Math.min(parseFloat(pct), 100) + '%';
+  // 同期情報
+  var lastSync = localStorage.getItem(CONFIG.syncKey);
+  var syncInfo = document.getElementById('syncInfo');
+  if (syncInfo) {
+    syncInfo.textContent = lastSync ? '最終同期: ' + formatSyncTime(lastSync) : '未同期（サーバーからデータ未取得）';
+  }
 }
 
 // ===== UI NAVIGATION =====
 function go(tab) {
   document.querySelectorAll('.pnl').forEach(function(p) { p.classList.remove('on'); });
   var tabs = document.querySelectorAll('.tab');
-  var tabNames = ['home', 'user', 'search', 'bar-chart-3', 'settings'];
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].classList.remove('on');
     tabs[i].setAttribute('aria-selected', 'false');
-    // Restore outline icon
-    var icoEl = tabs[i].querySelector('.ico');
-    if (icoEl && tabNames[i]) icoEl.innerHTML = icon(tabNames[i], 26);
   }
   document.getElementById('p-' + tab).classList.add('on');
   var tabIndex = { home: 0, karte: 1, search: 2, stats: 3, settings: 4 };
   if (tabIndex[tab] !== undefined) {
     tabs[tabIndex[tab]].classList.add('on');
     tabs[tabIndex[tab]].setAttribute('aria-selected', 'true');
-    // Switch to filled icon
-    var activeIco = tabs[tabIndex[tab]].querySelector('.ico');
-    var filledName = tabNames[tabIndex[tab]] + '-filled';
-    if (activeIco && ICONS[filledName]) activeIco.innerHTML = icon(filledName, 26);
   }
   if (tab === 'home') renderHome();
   if (tab === 'karte') {
@@ -2662,7 +2733,7 @@ function openModal(idx) {
   document.getElementById('moTitle').textContent = '対応詳細';
   var html = '';
   if (repeat > 1) {
-    html += '<div class="rep-banner" style="margin-bottom:18px">' + icon('repeat', 16) + ' このユーザーは<b> ' + repeat + '回目 </b>のご来店です</div>';
+    html += '<div class="rep-banner" style="margin-bottom:18px">🔄 このユーザーは<b> ' + repeat + '回目 </b>のご来店です</div>';
   }
   html += '<div class="mo-sec"><div class="mo-sec-t">基本情報</div>';
   var basicFields = [
@@ -2682,8 +2753,8 @@ function openModal(idx) {
   var statusFields = [
     ['担当', rec.staff || '記録なし'],
     ['場所', rec.location || ''],
-    ['エスカレーション', esc ? icon('zap', 14) + ' あり（遠山）' : 'なし'],
-    ['撮影記録', media ? icon('camera', 14) + ' あり' : 'なし']
+    ['エスカレーション', esc ? '⚡ あり（遠山）' : 'なし'],
+    ['撮影記録', media ? '📸 あり' : 'なし']
   ];
   statusFields.forEach(function(f) {
     if (f[1]) html += '<div class="mo-f"><div class="mo-fl">' + f[0] + '</div><div class="mo-fv">' + escHtml(f[1]) + '</div></div>';
@@ -2744,7 +2815,7 @@ function populateFilters() {
   var staffSet = {};
   STATE.data.forEach(function(r) {
     if (r.staff) {
-      r.staff.split(/[,、]/).forEach(function(s) {
+      r.staff.split(',').forEach(function(s) {
         var trimmed = s.trim();
         if (trimmed && trimmed !== 'nan') staffSet[trimmed] = true;
       });
@@ -2838,10 +2909,6 @@ function refreshAll() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function() {
-  initIcons();
-  // Set initial home tab to filled icon
-  var homeIco = document.querySelector('.tab.on .ico');
-  if (homeIco) homeIco.innerHTML = icon('home-filled', 26);
   if (sessionStorage.getItem(CONFIG.sessionKey) === '1') showApp();
 
   // Enter key handlers
