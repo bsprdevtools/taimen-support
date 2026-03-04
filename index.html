@@ -398,8 +398,6 @@ body{
 .scard-t{font-size:.95rem;font-weight:700;color:var(--navy-700);margin-bottom:6px}
 .scard-d{font-size:.85rem;color:var(--text2);margin-bottom:16px;line-height:1.6}
 .scard-m{font-size:.85rem;color:var(--text2);margin-top:12px}
-.sbar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-top:8px}
-.sbar-f{height:100%;background:var(--blue);border-radius:4px;transition:width .3s}
 .pwa-notice{
   background:var(--navy-50);border:1.5px solid var(--navy-100);
   border-radius:var(--r-lg);padding:16px 18px;margin-bottom:16px;
@@ -537,8 +535,12 @@ body{
 .kpi-sub{font-size:.72rem;color:var(--text3);margin-top:3px;font-weight:500}
 
 /* Vertical bar chart */
-.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:110px;padding:0 4px;border-bottom:2px solid var(--border-lt)}
-.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0}
+.vbar-chart{position:relative;padding-left:36px}
+.vbar-wrap{display:flex;align-items:flex-end;gap:6px;height:200px;padding:0 4px;border-bottom:2px solid var(--border-lt);position:relative;z-index:1}
+.vbar-axis{position:absolute;top:0;left:36px;right:0;bottom:0;pointer-events:none;z-index:0}
+.vbar-grid{position:absolute;left:0;right:0;border-top:1px dashed #dde1e6}
+.vbar-grid-label{position:absolute;right:calc(100% + 6px);font-size:.7rem;color:var(--text2);white-space:nowrap;top:-8px;font-variant-numeric:tabular-nums;font-weight:500}
+.vbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;min-width:0;height:100%}
 .vbar-fill{width:100%;max-width:50px;border-radius:5px 5px 0 0;background:var(--blue);transition:height .3s ease;min-height:2px}
 .vbar-val{font-size:.72rem;font-weight:700;color:var(--navy-700);margin-bottom:3px;font-variant-numeric:tabular-nums}
 .vbar-labels{display:flex;gap:6px;padding:8px 4px 0;justify-content:space-around}
@@ -599,7 +601,7 @@ body{
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .kpi-v{font-size:1.7rem}
   .hbar-label{min-width:80px;max-width:120px;font-size:.78rem}
-  .vbar-wrap{height:100px}
+  .vbar-wrap{height:180px}
   .vbar-lbl{font-size:.6rem}
   .heatmap{gap:3px;font-size:.7rem}
   .hm-cell{padding:6px 2px;min-height:30px;font-size:.7rem}
@@ -819,30 +821,17 @@ body{
     <div class="scard">
       <div class="scard-t">データ同期</div>
       <div class="scard-d">サーバーから最新データを取得します。通常はページ読み込み時に自動同期されます。</div>
-      <button class="btn btn-p btn-bl" onclick="fetchLatestData()">今すぐ同期</button>
+      <button class="btn btn-p btn-bl" id="syncBtn" onclick="fetchLatestData()">今すぐ同期</button>
       <div class="scard-m" id="syncInfo">最終同期: ---</div>
     </div>
     <div class="scard">
-      <div class="scard-t">CSVインポート（手動）</div>
-      <div class="scard-d">ネットワーク接続がない場合やCSVファイルを直接読み込みたい場合に使用します。</div>
-      <input type="file" id="cf" accept=".csv" style="display:none" onchange="importCSV(this)">
-      <button class="btn btn-p btn-bl" onclick="document.getElementById('cf').click()">CSVファイルを選択</button>
+      <div class="scard-t">レコード数</div>
       <div class="scard-m" id="im">現在: 0件</div>
     </div>
     <div class="scard">
       <div class="scard-t">CSVエクスポート</div>
-      <div class="scard-d">バックアップ用にCSVファイルをダウンロードします。定期的な保存を推奨します。</div>
+      <div class="scard-d">バックアップ用にCSVファイルをダウンロードします。</div>
       <button class="btn btn-ok btn-bl" onclick="exportCSV()">CSVをエクスポート</button>
-    </div>
-    <div class="scard">
-      <div class="scard-t">ストレージ使用量</div>
-      <div class="scard-m" id="sto">計算中...</div>
-      <div class="sbar"><div class="sbar-f" id="sbf" style="width:0%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="scard-t" style="color:var(--red)">⚠️ データ削除</div>
-      <div class="scard-d">すべてのデータを削除します。この操作は元に戻せません。</div>
-      <button class="btn btn-d btn-bl" onclick="nukeData()">すべて削除</button>
     </div>
     <div style="text-align:center;color:var(--text3);font-size:.75rem;margin-top:24px;line-height:1.8">
       対面サポート支援システム v4.0<br>
@@ -874,12 +863,10 @@ var CONFIG = {
   passcodeLength: 6,
   verifyData: 'kqaXeOqiM3JCBcWoxkSsMOxPQUyyPyeJ2jnjEw2LnYxVsMD7mA/BaLk+Sz1GIeNt5wfAliZG',
   verifyPlaintext: 'TAIMEN_SUPPORT_VERIFIED_OK',
-  storageKey: 'taimen_v3',
   sessionKey: 'taimen_session',
   passcodeKey: 'taimen_pc',
   pageSize: 50,
   dataUrl: 'data.enc',
-  syncKey: 'taimen_last_sync',
   pbkdf2Salt: 'taimen_support_v4_salt_2026',
   pbkdf2Iterations: 100000,
   karteHistoryMax: 20,
@@ -889,8 +876,7 @@ var CONFIG = {
   topCategoryDisplay: 8,
   weeklySummaryWeeks: 8,
   toastDuration: 3500,
-  similarCasesMax: 3,
-  storageLimitBytes: 5 * 1024 * 1024
+  similarCasesMax: 3
 };
 
 // ===== STATE =====
@@ -905,6 +891,9 @@ var STATE = {
   userIndex: null,
   userRecords: null
 };
+
+// ===== UTILITY: zero-pad (iOS 16 Safari互換) =====
+function pad02(n) { return (n < 10 ? '0' : '') + n; }
 
 // ===== CATEGORY RULES =====
 var CATEGORY_RULES = [
@@ -1195,59 +1184,11 @@ function csvToRecords(csvText) {
 }
 
 // ===== DATA MANAGEMENT =====
-function loadData() {
-  try {
-    var raw = localStorage.getItem(CONFIG.storageKey);
-    if (raw) {
-      var parsed = JSON.parse(raw);
-      STATE.data = parsed.records || [];
-    }
-  } catch (e) {
-    STATE.data = [];
-    console.error('loadData error:', e);
-    toast('データの読み込みに失敗しました', 'er');
-  }
-  buildUserIndex();
-}
+/* loadData() — 削除済み。データはfetchLatestData()でサーバーから取得する */
 
-function saveData() {
-  try {
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify({
-      version: 4,
-      timestamp: new Date().toISOString(),
-      count: STATE.data.length,
-      records: STATE.data
-    }));
-  } catch (e) {
-    console.error('saveData error:', e);
-    if (e.name === 'QuotaExceededError' || e.code === 22) {
-      toast('ストレージ容量不足です。設定画面でデータをエクスポートしてください', 'er');
-    } else {
-      toast('データの保存に失敗しました', 'er');
-    }
-  }
-}
+/* saveData() — 削除済み。localStorageへの保存は不要 */
 
-function mergeData(newRecords) {
-  var existingKeys = {};
-  STATE.data.forEach(function(r) {
-    existingKeys[r.date + '|' + r.startTime + '|' + r.userId + '|' + r.no] = true;
-  });
-  var added = 0;
-  for (var i = 0; i < newRecords.length; i++) {
-    var rec = newRecords[i];
-    var key = rec.date + '|' + rec.startTime + '|' + rec.userId + '|' + rec.no;
-    if (!existingKeys[key]) {
-      STATE.data.push(rec);
-      existingKeys[key] = true;
-      added++;
-    }
-  }
-  STATE.data.sort(compareByDateDesc);
-  saveData();
-  buildUserIndex();
-  return { added: added, skipped: newRecords.length - added };
-}
+/* mergeData() — 削除済み。importCSV廃止により不要 */
 
 // ===== CRYPTO: PBKDF2 + AES-GCM =====
 function deriveKey(passcode) {
@@ -1281,13 +1222,23 @@ function decryptData(key, b64Data) {
   });
 }
 
+var _fetchingData = false;
 function fetchLatestData() {
   if (!STATE.cryptoKey) return;
+  if (_fetchingData) return;
+  _fetchingData = true;
+  var syncBtn = document.getElementById('syncBtn');
+  if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = '同期中...'; }
   var syncIndicator = document.getElementById('syncStatus');
   if (syncIndicator) syncIndicator.textContent = '同期中...';
 
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+
+  function resetSyncBtn() {
+    _fetchingData = false;
+    if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = '今すぐ同期'; }
+  }
 
   fetch(CONFIG.dataUrl, { cache: 'no-store', signal: controller.signal })
     .then(function(res) {
@@ -1300,21 +1251,15 @@ function fetchLatestData() {
     })
     .then(function(csvText) {
       var records = csvToRecords(csvText);
-      if (!records.length) { toast('復号成功、有効レコードなし', 'i'); return; }
-      var before = STATE.data.length;
-      var result = mergeData(records);
+      if (!records.length) { toast('復号成功、有効レコードなし', 'i'); resetSyncBtn(); return; }
+      STATE.data = records;
+      STATE.data.sort(compareByDateDesc);
+      buildUserIndex();
       var now = new Date().toISOString();
-      localStorage.setItem(CONFIG.syncKey, now);
       if (syncIndicator) syncIndicator.textContent = '最終同期: ' + formatSyncTime(now);
-      if (result.added > 0) {
-        toast('サーバーから' + result.added + '件の新規データを取得（合計' + STATE.data.length + '件）', 'ok');
-        refreshAll();
-      } else if (before === 0) {
-        toast(records.length + '件のデータを読み込みました', 'ok');
-        refreshAll();
-      } else {
-        toast('データは最新です（' + STATE.data.length + '件）', 'i');
-      }
+      toast(records.length + '件のデータを読み込みました', 'ok');
+      refreshAll();
+      resetSyncBtn();
     })
     .catch(function(err) {
       clearTimeout(timeoutId);
@@ -1322,27 +1267,22 @@ function fetchLatestData() {
       if (err.name === 'AbortError') {
         toast('データ取得がタイムアウトしました', 'er');
       } else if (msg.indexOf('Failed to fetch') !== -1 || msg.indexOf('NetworkError') !== -1 || msg.indexOf('HTTP') !== -1) {
-        if (STATE.data.length > 0) {
-          toast('オフラインモード: 前回のデータを表示中', 'i');
-        } else {
-          toast('ネットワーク接続を確認してください', 'er');
-        }
+        toast('ネットワーク接続を確認してください', 'er');
       } else if (msg.indexOf('OperationError') !== -1) {
         toast('復号に失敗しました（パスコード不一致またはデータ破損）', 'er');
       } else {
         toast('データ取得に失敗: ' + msg.substring(0, 50), 'er');
         console.error('fetchLatestData error:', err);
       }
-      var lastSync = localStorage.getItem(CONFIG.syncKey);
-      if (syncIndicator && lastSync) syncIndicator.textContent = '最終同期: ' + formatSyncTime(lastSync);
-      else if (syncIndicator) syncIndicator.textContent = '未同期';
+      if (syncIndicator) syncIndicator.textContent = '同期失敗';
+      resetSyncBtn();
     });
 }
 
 function formatSyncTime(isoStr) {
   try {
     var d = new Date(isoStr);
-    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad02(d.getHours()) + ':' + pad02(d.getMinutes());
   } catch(e) { return isoStr; }
 }
 
@@ -1728,15 +1668,10 @@ function checkPasscode() {
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  loadData();
   refreshAll();
-  // sessionStorageにパスコードは保存しない（セキュリティ対策）
-  // CryptoKeyが既にSTATEにあればそれを使う、なければfetchしない
   if (STATE.cryptoKey) {
     fetchLatestData();
   }
-  // CryptoKeyがない場合（ページリロード後）は再ログインが必要
-  // localStorageのキャッシュデータは上のloadData()で表示済み
 }
 
 function logout() {
@@ -1750,24 +1685,7 @@ function logout() {
 }
 
 // ===== FILE OPERATIONS =====
-function importCSV(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      var records = csvToRecords(e.target.result);
-      if (!records.length) { toast('有効なレコードが見つかりません', 'er'); return; }
-      var result = mergeData(records);
-      toast(result.added + '件追加（' + result.skipped + '件はスキップ）合計' + STATE.data.length + '件', 'ok');
-      refreshAll();
-    } catch (err) {
-      toast('読み込みに失敗しました: ' + err.message, 'er');
-    }
-  };
-  reader.readAsText(file, 'UTF-8');
-  input.value = '';
-}
+/* importCSV() — 削除済み。データソースはサーバーのみ */
 
 function exportCSV() {
   if (!STATE.data.length) { toast('データがありません', 'er'); return; }
@@ -1792,14 +1710,7 @@ function exportCSV() {
   toast('エクスポートが完了しました', 'ok');
 }
 
-function nukeData() {
-  if (!confirm('すべてのデータを削除しますか？\nこの操作は元に戻せません。')) return;
-  if (!confirm('本当に削除してよろしいですか？\n（最終確認）')) return;
-  STATE.data = [];
-  localStorage.removeItem(CONFIG.storageKey);
-  refreshAll();
-  toast('すべてのデータを削除しました', 'i');
-}
+/* nukeData() — 削除済み。読み取り専用ビューアーに不要 */
 
 // ===== SEARCH =====
 function setSearchMode(mode) {
@@ -1854,7 +1765,7 @@ function doSearch() {
         var rd = r.date;
         var now = new Date();
         var y = now.getFullYear();
-        var m = String(now.getMonth() + 1).padStart(2, '0');
+        var m = pad02(now.getMonth() + 1);
         if (periodFilter === 'custom') {
           var fromDate = document.getElementById('si-from').value;
           var toDate = document.getElementById('si-to').value;
@@ -1864,13 +1775,13 @@ function doSearch() {
           var dayOfWeek = now.getDay() || 7;
           var sw = new Date(now);
           sw.setDate(now.getDate() - dayOfWeek + 1);
-          var startWeek = sw.getFullYear() + '-' + String(sw.getMonth() + 1).padStart(2, '0') + '-' + String(sw.getDate()).padStart(2, '0');
+          var startWeek = sw.getFullYear() + '-' + pad02(sw.getMonth() + 1) + '-' + pad02(sw.getDate());
           if (rd < startWeek) return false;
         } else if (periodFilter === 'last') {
           var slm = new Date(y, now.getMonth() - 1, 1);
           var elm = new Date(y, now.getMonth(), 0);
-          var startLast = slm.getFullYear() + '-' + String(slm.getMonth() + 1).padStart(2, '0') + '-01';
-          var endLast = elm.getFullYear() + '-' + String(elm.getMonth() + 1).padStart(2, '0') + '-' + String(elm.getDate()).padStart(2, '0');
+          var startLast = slm.getFullYear() + '-' + pad02(slm.getMonth() + 1) + '-01';
+          var endLast = elm.getFullYear() + '-' + pad02(elm.getMonth() + 1) + '-' + pad02(elm.getDate());
           if (rd < startLast || rd > endLast) return false;
         } else if (periodFilter === 'year') {
           if (rd.indexOf(String(y)) !== 0) return false;
@@ -1882,7 +1793,7 @@ function doSearch() {
           } else {
             var sm = new Date(now);
             sm.setMonth(sm.getMonth() - months);
-            var startStr = sm.getFullYear() + '-' + String(sm.getMonth() + 1).padStart(2, '0') + '-' + String(sm.getDate()).padStart(2, '0');
+            var startStr = sm.getFullYear() + '-' + pad02(sm.getMonth() + 1) + '-' + pad02(sm.getDate());
             if (rd < startStr) return false;
           }
         }
@@ -2086,7 +1997,7 @@ function renderHome() {
   if (!hasData) return;
 
   var now = new Date();
-  var thisYM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var thisYM = now.getFullYear() + '-' + pad02(now.getMonth() + 1);
   var thisMonthCount = 0;
   var catCounts = {};
   var uniqueIds = {};
@@ -2278,26 +2189,45 @@ function updateWkToggleLabel() {
 }
 
 // ===== STATS PANEL =====
-var STATS_PERIOD = 'all';
+var STATS_PERIOD = 'thisMonth';
 
 function setStatsPeriod(period) {
   STATS_PERIOD = period;
   renderStatsPanel();
 }
 
+function calcYTicks(maxVal) {
+  if (maxVal <= 0) maxVal = 1;
+  var step;
+  if (maxVal <= 5) step = 1;
+  else if (maxVal <= 10) step = 2;
+  else if (maxVal <= 25) step = 5;
+  else if (maxVal <= 50) step = 10;
+  else if (maxVal <= 100) step = 20;
+  else if (maxVal <= 250) step = 50;
+  else step = Math.ceil(maxVal / 5 / 10) * 10;
+  var ticks = [0];
+  var v = step;
+  while (v <= maxVal) { ticks.push(v); v += step; }
+  if (ticks[ticks.length - 1] < maxVal) ticks.push(ticks[ticks.length - 1] + step);
+  ticks.max = ticks[ticks.length - 1];
+  return ticks;
+}
+
 function getStatsDateRange(period) {
   var now = new Date();
   var y = now.getFullYear();
   var m = now.getMonth();
-  if (period === 'thisMonth') return { start: y + '-' + String(m + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: y + '年' + (m + 1) + '月' };
-  if (period === 'lastMonth') {
-    var lm = new Date(y, m - 1, 1);
-    var lme = new Date(y, m, 0);
-    return { start: lm.getFullYear() + '-' + String(lm.getMonth() + 1).padStart(2, '0') + '-01', end: lme.getFullYear() + '-' + String(lme.getMonth() + 1).padStart(2, '0') + '-' + String(lme.getDate()).padStart(2, '0'), label: lm.getFullYear() + '年' + (lm.getMonth() + 1) + '月' };
+  var d = now.getDate();
+  var pad = pad02;
+  var fmt = function(dt) { return dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()); };
+  if (period === 'thisWeek') {
+    var dow = now.getDay();
+    var mon = new Date(y, m, d - (dow === 0 ? 6 : dow - 1));
+    var sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    return { start: fmt(mon), end: fmt(sun), label: '今週（' + (mon.getMonth() + 1) + '/' + mon.getDate() + '〜' + (sun.getMonth() + 1) + '/' + sun.getDate() + '）' };
   }
-  if (period === '3m') { var s = new Date(y, m - 2, 1); return { start: s.getFullYear() + '-' + String(s.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去3ヶ月' }; }
-  if (period === '6m') { var s6 = new Date(y, m - 5, 1); return { start: s6.getFullYear() + '-' + String(s6.getMonth() + 1).padStart(2, '0') + '-01', end: '9999-12-31', label: '過去6ヶ月' }; }
-  if (period === 'thisYear') return { start: y + '-01-01', end: '9999-12-31', label: y + '年' };
+  if (period === 'thisMonth') return { start: y + '-' + pad(m + 1) + '-01', end: '9999-12-31', label: y + '年' + (m + 1) + '月' };
   if (period === 'custom') {
     var from = document.getElementById('stats-from');
     var to = document.getElementById('stats-to');
@@ -2326,7 +2256,7 @@ function renderStatsPanel() {
 
   // Period selector - 5 buttons (reduced from 7: removed lastMonth and 6m)
   html += '<div class="stats-period">';
-  var periods = [['thisMonth','今月'],['3m','3ヶ月'],['thisYear','今年'],['all','全期間'],['custom','期間指定']];
+  var periods = [['thisWeek','今週'],['thisMonth','今月'],['custom','期間指定']];
   periods.forEach(function(p) {
     html += '<button class="stats-period-btn' + (STATS_PERIOD === p[0] ? ' on' : '') + '" onclick="setStatsPeriod(\'' + p[0] + '\')">' + p[1] + '</button>';
   });
@@ -2445,20 +2375,32 @@ function renderStatsPanel() {
   });
   var monthKeys = Object.keys(monthCounts).sort();
 
-  if (monthKeys.length > 1) {
+  if (monthKeys.length >= 1) {
     var maxMonth = Math.max.apply(null, monthKeys.map(function(k) { return monthCounts[k]; }));
     // Detect if data spans multiple years
     var yearSet = {};
     monthKeys.forEach(function(ym) { yearSet[ym.split('-')[0]] = true; });
     var multiYear = Object.keys(yearSet).length > 1;
 
+    // Calculate nice Y-axis ticks
+    var yTicks = calcYTicks(maxMonth);
+
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">📈</span>月別対応件数</div>';
+    html += '<div class="vbar-chart">';
+    // Y-axis grid lines (absolute overlay)
+    html += '<div class="vbar-axis">';
+    for (var yi = 0; yi < yTicks.length; yi++) {
+      var gridBottom = yTicks.max > 0 ? (yTicks[yi] / yTicks.max * 100) : 0;
+      html += '<div class="vbar-grid" style="bottom:' + gridBottom + '%"><span class="vbar-grid-label">' + yTicks[yi] + '</span></div>';
+    }
+    html += '</div>';
+    // Bars
     html += '<div class="vbar-wrap">';
     monthKeys.forEach(function(ym) {
       var count = monthCounts[ym];
-      var pct = maxMonth > 0 ? (count / maxMonth * 100) : 0;
-      html += '<div class="vbar"><div class="vbar-val">' + count + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 15) + '%"></div></div>';
+      var pct = yTicks.max > 0 ? (count / yTicks.max * 100) : 0;
+      html += '<div class="vbar"><div class="vbar-val">' + count + '</div><div class="vbar-fill" style="height:' + Math.max(pct, 2) + '%"></div></div>';
     });
     html += '</div>';
     html += '<div class="vbar-labels">';
@@ -2471,23 +2413,32 @@ function renderStatsPanel() {
       prevYear = yr;
       html += '<div class="vbar-lbl">' + mon + '月' + (showYear ? '<span class="vbar-lbl-year">' + yr + '</span>' : '') + '</div>';
     });
-    html += '</div></div>';
+    html += '</div></div></div>';
   }
 
   // === Escalation Count (vertical bar chart) ===
-  if (monthKeys.length > 1) {
+  if (monthKeys.length >= 1) {
     var escCounts = monthKeys.map(function(ym) {
       return monthEscCounts[ym] || 0;
     });
     var maxEsc = Math.max.apply(null, escCounts);
     if (maxEsc === 0) maxEsc = 1;
 
+    var escTicks = calcYTicks(maxEsc);
+
     html += '<div class="chart-card">';
     html += '<div class="chart-card-t"><span class="ct-ico">⚡</span>月別エスカレーション件数</div>';
+    html += '<div class="vbar-chart">';
+    html += '<div class="vbar-axis">';
+    for (var ei = 0; ei < escTicks.length; ei++) {
+      var escGridBottom = escTicks.max > 0 ? (escTicks[ei] / escTicks.max * 100) : 0;
+      html += '<div class="vbar-grid" style="bottom:' + escGridBottom + '%"><span class="vbar-grid-label">' + escTicks[ei] + '</span></div>';
+    }
+    html += '</div>';
     html += '<div class="vbar-wrap">';
     escCounts.forEach(function(val) {
-      var pct = maxEsc > 0 ? (val / maxEsc * 100) : 0;
-      var h = val > 0 ? Math.max(pct, 15) : 3;
+      var pct = escTicks.max > 0 ? (val / escTicks.max * 100) : 0;
+      var h = val > 0 ? Math.max(pct, 2) : 0;
       html += '<div class="vbar"><div class="vbar-val">' + val + '</div><div class="vbar-fill" style="height:' + h + '%;background:var(--red)"></div></div>';
     });
     html += '</div>';
@@ -2501,7 +2452,7 @@ function renderStatsPanel() {
       spkPrevYr = yr;
       html += '<div class="vbar-lbl">' + mon + '月' + (showYr ? '<span class="vbar-lbl-year">' + yr + '</span>' : '') + '</div>';
     });
-    html += '</div></div>';
+    html += '</div></div></div>';
   }
 
   // === Category Horizontal Bar ===
@@ -2680,19 +2631,6 @@ function renderStatsPanel() {
 
 function renderSettings() {
   document.getElementById('im').textContent = '現在: ' + STATE.data.length + '件のレコード';
-  var raw = localStorage.getItem(CONFIG.storageKey) || '';
-  var used = new Blob([raw]).size;
-  var max = CONFIG.storageLimitBytes;
-  var pct = ((used / max) * 100).toFixed(1);
-  document.getElementById('sto').textContent =
-    '使用量: ' + (used / 1024).toFixed(0) + 'KB / ' + (max / 1024).toFixed(0) + 'KB (' + pct + '%)';
-  document.getElementById('sbf').style.width = Math.min(parseFloat(pct), 100) + '%';
-  // 同期情報
-  var lastSync = localStorage.getItem(CONFIG.syncKey);
-  var syncInfo = document.getElementById('syncInfo');
-  if (syncInfo) {
-    syncInfo.textContent = lastSync ? '最終同期: ' + formatSyncTime(lastSync) : '未同期（サーバーからデータ未取得）';
-  }
 }
 
 // ===== UI NAVIGATION =====
