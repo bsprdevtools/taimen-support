@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none';">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="お助けガイド">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%239E4A0F' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='50'>💡</text></svg>">
+<link rel="manifest" href="manifest-ai.json">
+<title>てくポ お助けガイド</title>
+<style>
+/* ============================================================
+   てくポ お助けガイド v2.0
+   対面サポート用 AIアシスタント（ローカル検索版）
+   iPad横向き2カラムレイアウト対応
+
+   設計根拠: 5チーム調査（論文101件・事例33件）
+   - フォント: 本文22pt, ボタン26pt (Hou et al. 2022, Gomez-Hernandez 2023)
+   - ボタン: 最小56px, メニュー72px (Yeh 2025, Jin et al. 2022)
+   - コントラスト: 7:1以上 WCAG AAA (W3C WAI)
+   - 配色: 暖色系, 青禁止 (Gao et al. 2024, 白内障対策)
+   - 1画面要素: 3個以下 (Naveh-Benjamin et al. 2008, 作業記憶2-3項目)
+   - タップのみ (Kobayashi et al. 2011, タップ78%/ピンチ24%)
+   - やまとことば優先 (文化庁世論調査, 60歳以上3割がカタカナ語に困る)
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* 暖色系パレット — 青禁止 (Gao et al. 2024: 暖色系がシニアにポジティブ) */
+  --bg: #F5F0E8;
+  --bg-white: #FFFFFF;
+  --text: #1A1A1A;
+  --text-sub: #4A4035;           /* 7:1+ on white and cream */
+  --primary: #9E4A0F;            /* darker orange, ~7.5:1 with white */
+  --primary-dark: #7A3A0A;
+  --primary-light: #FFF3EB;
+  --accent: #8B6914;             /* 暗めゴールド */
+  --success: #1B5E20;            /* darker green, 7:1+ with white */
+  --error: #C62828;
+  --border: #D4C8B8;
+  --card-shadow: 0 3px 12px rgba(90, 70, 40, 0.1);
+  --btn-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  --r: 14px;
+}
+
+html {
+  font-size: 22px; /* 本文22pt (Hou et al. 2022: 18-22pt推奨, お客様にも見せるため上限値) */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: "Hiragino Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ===== ヘッダー ===== */
+header.header {
+  background: linear-gradient(135deg, #5C3A0E, #8B5A1A);
+  color: #fff;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(60,40,10,0.3);
+}
+header.header h1 {
+  font-size: 1.27rem; /* 28px */
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.8;
+}
+.header-back {
+  padding: 12px 18px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 1.18rem; /* 26px */
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s;
+  line-height: 1.8;
+}
+.header-back:active {
+  background: rgba(255,255,255,0.3);
+}
+
+/* ===== 2カラムレイアウト ===== */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
+}
+
+/* ===== 左パネル ===== */
+.left-panel {
+  padding: 20px 16px;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border);
+}
+
+.home-title {
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* メニューボタン — 1画面3つまで (Naveh-Benjamin: 作業記憶2-3項目) */
+.menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 24px;
+  min-height: 72px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--bg-white);
+  box-shadow: var(--btn-shadow);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  -webkit-user-select: none;
+  user-select: none;
+  text-align: left;
+  line-height: 1.8;
+}
+.menu-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.menu-btn .icon {
+  font-size: 1.6rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+.menu-btn:nth-child(1) .icon { background: #FFF3EB; }
+.menu-btn:nth-child(2) .icon { background: #FEF3C7; }
+.menu-btn:nth-child(3) .icon { background: #ECFDF5; }
+
+/* ===== 検索入力 ===== */
+.search-area {
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+.search-box {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.search-input {
+  flex: 1;
+  padding: 16px 20px;
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  font-size: 1rem;
+  background: var(--bg-white);
+  color: var(--text);
+  min-height: 56px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  line-height: 1.8;
+}
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(158, 74, 15, 0.15);
+}
+.search-input::placeholder {
+  color: #6B5D4F; /* 7:1+ on white */
+}
+
+/* 検索ボタン */
+.search-submit {
+  padding: 16px 24px;
+  min-width: 80px;
+  min-height: 56px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.1s;
+  line-height: 1.8;
+}
+.search-submit:active {
+  transform: scale(0.96);
+  background: var(--primary-dark);
+}
+
+/* 音声入力ボタン */
+.voice-btn {
+  padding: 16px;
+  min-width: 56px;
+  min-height: 56px;
+  border: 2px solid var(--primary);
+  border-radius: var(--r);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, background 0.2s;
+}
+.voice-btn:active {
+  transform: scale(0.96);
+  background: var(--primary);
+  color: #fff;
+}
+.voice-btn.recording {
+  background: var(--error);
+  border-color: var(--error);
+  color: #fff;
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ===== エスカレーション常設ボタン（左パネル下部） ===== */
+.escalation-shortcut {
+  margin-top: 16px;
+}
+.escalation-shortcut-btn {
+  width: 100%;
+  padding: 16px;
+  min-height: 56px;
+  border: 2px solid var(--success);
+  border-radius: var(--r);
+  background: #E8F5E9;
+  color: var(--success);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.1s;
+  line-height: 1.8;
+}
+.escalation-shortcut-btn:active {
+  transform: scale(0.96);
+  background: var(--success);
+  color: #fff;
+}
+
+/* ===== 右パネル（コンテンツ領域） ===== */
+.right-panel {
+  padding: 20px 16px 120px;
+  flex: 1;
+}
+
+/* ===== カード ===== */
+.card {
+  background: var(--bg-white);
+  border-radius: var(--r);
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+/* ===== カテゴリ選択 ===== */
+.cat-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 22px;
+  min-height: 64px;
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg-white);
+  box-shadow: var(--btn-shadow);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.2s;
+  text-align: left;
+  line-height: 1.8;
+}
+.cat-btn:active {
+  transform: scale(0.97);
+  border-color: var(--primary);
+}
+.cat-btn .count {
+  margin-left: auto;
+  font-size: 0.91rem; /* 20px minimum */
+  color: var(--text-sub);
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+/* ===== 確認ダイアログ ===== */
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-overlay.show {
+  display: flex;
+}
+.confirm-box {
+  background: var(--bg-white);
+  border-radius: 20px;
+  padding: 36px 32px;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.confirm-text {
+  font-size: 1.18rem; /* 26px */
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.8;
+}
+.confirm-query {
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 28px;
+  padding: 14px 20px;
+  background: var(--primary-light);
+  border-radius: 10px;
+  line-height: 1.8;
+}
+.confirm-btns {
+  display: flex;
+  gap: 14px;
+}
+.confirm-btns button {
+  flex: 1;
+  padding: 16px;
+  min-height: 60px;
+  border: none;
+  border-radius: var(--r);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.1s;
+  line-height: 1.8;
+}
+.confirm-btns button:active { transform: scale(0.96); }
+.btn-yes {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-no {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* ===== 回答エリア ===== */
+.answer-card {
+  background: var(--bg-white);
+  border-radius: var(--r);
+  box-shadow: var(--card-shadow);
+  padding: 28px 24px;
+  margin-bottom: 16px;
+  border-left: 5px solid var(--primary);
+}
+.answer-label {
+  font-size: 0.91rem; /* 20px minimum */
+  font-weight: 600;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  line-height: 1.8;
+}
+.answer-q {
+  font-size: 1rem;
+  color: var(--text-sub);
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.8;
+}
+.answer-text {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+.answer-meta {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #EDE8E0;
+  font-size: 0.91rem; /* 20px minimum */
+  color: var(--text-sub);
+  display: flex;
+  gap: 16px;
+  line-height: 1.8;
+}
+.answer-device {
+  background: var(--bg);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+/* 検索結果なし */
+.no-result {
+  text-align: center;
+  padding: 40px 20px;
+}
+.no-result-icon {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+}
+.no-result-text {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.8;
+}
+.no-result-sub {
+  font-size: 0.91rem; /* 20px minimum */
+  color: var(--text-sub);
+  margin-bottom: 24px;
+  line-height: 1.8;
+}
+
+/* エスカレーション — 2回失敗で表示 */
+.escalation-box {
+  background: linear-gradient(135deg, #FFF3EB, #FEF3C7);
+  border: 2px solid var(--primary);
+  border-radius: var(--r);
+  padding: 28px 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+.escalation-icon { font-size: 2rem; margin-bottom: 10px; }
+.escalation-text {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+.escalation-phone {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+  letter-spacing: 1px;
+  line-height: 1.8;
+}
+
+/* ===== サジェストボタン ===== */
+.suggest-area {
+  margin-top: 16px;
+}
+.suggest-label {
+  font-size: 0.91rem; /* 20px minimum */
+  color: var(--text-sub);
+  margin-bottom: 10px;
+  font-weight: 500;
+  line-height: 1.8;
+}
+.suggest-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.suggest-btn {
+  width: 100%;
+  padding: 16px 20px;
+  min-height: 56px;
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg-white);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--btn-shadow);
+  transition: transform 0.1s, border-color 0.2s;
+  line-height: 1.8;
+}
+.suggest-btn:active {
+  transform: scale(0.97);
+  border-color: var(--primary);
+}
+
+/* ===== 戻るボタン（モバイル画面下部固定） ===== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-white);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  gap: 12px;
+  z-index: 100;
+  max-width: 960px;
+  margin: 0 auto;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+}
+.bottom-btn {
+  flex: 1;
+  padding: 16px;
+  min-height: 56px;
+  border: none;
+  border-radius: var(--r);
+  font-size: 1.18rem; /* 26px */
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s;
+  box-shadow: var(--btn-shadow);
+  line-height: 1.8;
+}
+.bottom-btn:active { transform: scale(0.96); }
+.bottom-home {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.bottom-call {
+  background: var(--success);
+  color: #fff;
+}
+
+/* ===== ローディング ===== */
+.loading {
+  display: none;
+  text-align: center;
+  padding: 30px;
+}
+.loading.show { display: block; }
+.loading-dots {
+  display: inline-flex;
+  gap: 8px;
+}
+.loading-dots span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: bounce 1.2s infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-10px); opacity: 1; }
+}
+.loading-text {
+  margin-top: 12px;
+  font-size: 0.91rem; /* 20px minimum */
+  color: var(--text-sub);
+  line-height: 1.8;
+}
+
+/* ===== 結果件数ラベル ===== */
+.result-count {
+  font-size: 0.91rem;
+  color: var(--text-sub);
+  font-weight: 600;
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+
+/* ===== 右パネルコンテンツ切替（モバイル向け: 不可視制御） ===== */
+.right-content { display: none; }
+.right-content.active { display: block; }
+
+/* ===== iPad横向き2カラムレイアウト ===== */
+@media (min-width: 768px) and (orientation: landscape) {
+  .app-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
+  }
+  .left-panel {
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .right-panel {
+    overflow-y: auto;
+    padding: 24px;
+    padding-bottom: 24px; /* no bottom-bar on landscape */
+  }
+  .escalation-shortcut {
+    margin-top: auto;
+    padding-top: 16px;
+  }
+  .menu-grid {
+    max-width: none;
+  }
+  .cat-grid {
+    max-width: 600px;
+  }
+  /* Hide bottom bar on landscape iPad */
+  .bottom-bar.mobile-only {
+    display: none;
+  }
+}
+
+/* ===== 印刷無効化 ===== */
+@media print { body { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- ===== ヘッダー ===== -->
+<header class="header" role="banner">
+  <h1>💡 てくポ お助けガイド</h1>
+  <button class="header-back" onclick="location.href='index.html'" aria-label="対応履歴に戻る">
+    ← 対応履歴
+  </button>
+</header>
+
+<div class="app-layout">
+  <!-- ===== 左パネル（iPad横向きでは常時表示） ===== -->
+  <aside class="left-panel">
+    <div class="home-title">何をお調べしますか？</div>
+    <div class="menu-grid">
+      <button class="menu-btn" onclick="showCategory('popular')" aria-label="よくある質問の種類をえらぶ">
+        <span class="icon">🔍</span>
+        <span>よくある質問</span>
+      </button>
+      <button class="menu-btn" onclick="showCategory('howto')" aria-label="使い方について種類をえらぶ">
+        <span class="icon">📖</span>
+        <span>使い方を聞く</span>
+      </button>
+      <button class="menu-btn" onclick="showCategory('trouble')" aria-label="困っていることの種類をえらぶ">
+        <span class="icon">🔧</span>
+        <span>困っている</span>
+      </button>
+    </div>
+
+    <!-- 自由入力エリア -->
+    <div class="search-area">
+      <div class="search-box">
+        <input type="text" class="search-input" id="freeInput"
+               placeholder="ここに入力して聞くこともできます"
+               enterkeyhint="search"
+               autocomplete="off"
+               aria-label="調べたい内容を入力">
+        <button class="voice-btn" id="voiceBtn" aria-label="声で質問する">
+          🎤
+        </button>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="search-submit" style="width:100%;" id="searchSubmitBtn" aria-label="入力した内容で検索する">
+          聞く
+        </button>
+      </div>
+    </div>
+
+    <!-- エスカレーション常設ボタン -->
+    <div class="escalation-shortcut">
+      <button class="escalation-shortcut-btn" id="escalationBtn" aria-label="遠山さんに電話で質問する">
+        📞 遠山さんに聞く
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== 右パネル（コンテンツ領域） ===== -->
+  <main class="right-panel" role="main">
+    <!-- おすすめの質問（初期表示） -->
+    <div id="welcomeContent" class="right-content active">
+      <div class="card">
+        <div class="suggest-label">みんながよく聞く質問</div>
+        <div class="suggest-btns" id="welcomeSuggestBtns">
+          <button class="suggest-btn" data-query="歩数が増えない">
+            歩数が増えない
+          </button>
+          <button class="suggest-btn" data-query="新しくアプリを入れたい">
+            新しくアプリを入れたい
+          </button>
+          <button class="suggest-btn" data-query="ポイントがもらえない">
+            ポイントがもらえない
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 種類をえらぶ画面 -->
+    <div id="categoryContent" class="right-content">
+      <div class="card">
+        <div class="home-title" id="catTitle">種類をえらぶ</div>
+        <div class="cat-grid" id="catGrid"></div>
+      </div>
+    </div>
+
+    <!-- 検索結果画面 -->
+    <div id="resultContent" class="right-content">
+      <div class="loading" id="loading" role="status" aria-live="assertive">
+        <div class="loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="loading-text">お調べしています...</div>
+      </div>
+      <div id="resultArea" aria-live="polite"></div>
+      <div id="suggestMore" style="display:none;">
+        <div class="card">
+          <div class="suggest-label">関連する質問</div>
+          <div class="suggest-btns" id="suggestMoreBtns"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== 確認ダイアログ ===== -->
+<div class="confirm-overlay" id="confirmDialog" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+  <div class="confirm-box">
+    <div class="confirm-text" id="confirmText">この内容で聞いてもいいですか？</div>
+    <div class="confirm-query" id="confirmQuery"></div>
+    <div class="confirm-btns">
+      <button class="btn-no" id="confirmNoBtn">やめる</button>
+      <button class="btn-yes" id="confirmYesBtn">はい、聞く</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== エスカレーション確認ダイアログ ===== -->
+<div class="confirm-overlay" id="escalationDialog" role="dialog" aria-modal="true" aria-labelledby="escalationText">
+  <div class="confirm-box">
+    <div class="confirm-text" id="escalationText">遠山さんに電話しますか？</div>
+    <div class="confirm-query" id="escalationPhone"></div>
+    <div class="confirm-btns">
+      <button class="btn-no" id="escalationNoBtn">やめる</button>
+      <button class="btn-yes" id="escalationYesBtn">はい、電話する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 下部固定バー（モバイルのみ） ===== -->
+<nav class="bottom-bar mobile-only" role="navigation" aria-label="メイン操作">
+  <button class="bottom-btn bottom-home" id="bottomHomeBtn" aria-label="最初の画面に戻る">
+    🏠 最初の画面
+  </button>
+  <button class="bottom-btn bottom-call" id="bottomCallBtn" aria-label="遠山さんに電話で質問する">
+    📞 遠山さんに聞く
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// てくポ お助けガイド v2.0 — ローカル検索エンジン
+// データ: 対面サポート記録375件（相談内容→対応内容ペア）
+// ハルシネーション: ゼロ（データにないものは返さない）
+// ============================================================
+
+// --- 対面サポートデータ（JSON埋め込み） ---
+const QA_DATA = [{"id": 0, "q": "新規登録", "a": "①アプリインストール　②メニューから申し込み～申し込み完了　②開発者モードを検知したのでUSBデバッグをOFF、③歩数計設定を省電力->標準、自動調整バッテリーをOFFに設定、　　④再起動　⑤画面操作をしながら概況説明実施、⑥最後に実際に歩いて頂き歩数計がカウントされるのを確認した。", "device": "Android AQUOS sense3", "cats": ["新規登録"]}, {"id": 0, "q": "・スマホの操作で、初期化してしまい、「脳にいいアプリ」が消えてしまった\n・新しくインストールしたが、ポイントが全くなくなってしまった\n・スターの意味を知りたい", "a": "・ご本人の氏名、町名、生年月日、ニックネームをお聞きして、遠山様へユーザーIDの問合せを行った。\n・現在入っている「脳にいいアプリ」をアンインストールして、再度インストールし、データの引継ぎの処理を行い、ポイントも復活できました。\n・ウォーキングチャレンジの結果が残っているかどうかを確認し、残っていたので安心されました。\n・スターについて、説明を行った。\n・ユーザーIDについて忘れないように説明。", "device": "Android OPPO", "cats": ["新規登録", "ポイント", "アプリ消失", "使い方", "スター"]}, {"id": 0, "q": "画面が真っ白でアプリが立ち上がらない", "a": "電源の再立ち上げを行ったところ、脳にいいアプリが正常に動作した。　自宅にWifiがないということで、年末年始の通信状況が低下していたことも想定される。", "device": "Android pixel 9 PRO", "cats": ["不具合"]}, {"id": 0, "q": "・脳トレがよくわからない、特に「ジグゾーパズル」と「スライドパズル」\n・ポイントの使い方がわからない", "a": "・ジグソーパズルについて、実際に脳トレを行ってもらいながら、説明をした。特に、最初の絵柄をよく覚えておくことが大事で、白い部分が出てきたときは、それを最初に動かし嵌めていくことが大事\n・スライドパズルについては、「スライドパズル攻略の基本知識」を身ながら、説明し、まず３枚を固定すること、L字型を作ることが大事であることを説明。　「スライドパズル攻略の基本知識」の動画をスマホで見られるように設定した。\n・スマホの再起動を実施。\n・「スライドパズルの練習ガイド」をてくポ支援ガイドから、「スライド」で検索し、そのQRコードを読み取り、スマホに登録、練習ガイドができるように教えた。\n・ソフトウェア更新が出ていたので、アップデートして、再起動を行った。\n・貯まったポイントの使い方を説明した。\n・ユーザーIDについて忘れないように説明。", "device": "Android 京セラ シニアA001KC", "cats": ["ポイント", "スライドパズル", "脳トレ", "使い方"]}, {"id": 0, "q": "①歩数計が合わない（夫婦で歩数計が合わない）\n②スライドパズルの攻略法を知りたい", "a": "①歩数計設定を開き、省電力->標準に設定変更、自動調整バッテリーをOFF、再起動\n②QRコードを読み取りスライドパズルの解説動画を紹介、保存", "device": "Android Xperia SO-53C", "cats": ["歩数", "スライドパズル"]}, {"id": 0, "q": "①歩数計が合わない（夫婦で歩数計が合わない）\n②スライドパズルの攻略法を知りたい", "a": "①歩数計設定を開き、省電力->標準に設定変更、再起動\n②QRコードを読み取りスライドパズルの解説動画を紹介、保存", "device": "Android Xperia SO-53C", "cats": ["歩数", "スライドパズル"]}, {"id": 0, "q": "アプリのポイントが付かない。　市へ確認したところ、番号（ID）を教えてくれたので、対策をしてほしい。", "a": "誤って、脳にいいアプリを削除して、再度入れたとのこと。\nその際、引継ぎ処理がされていなかった。\n旧IDをもとに再インストールして引継ぎを行って回復。", "device": "Android", "cats": ["ポイント", "ID・ログイン"]}, {"id": 0, "q": "画面が真っ白でアプリが立ち上がらない", "a": "電源の再立ち上げを行ったところ、脳にいいアプリが正常に動作した。　年末年始の通信状況が低下していたことも想定される。", "device": "Android", "cats": ["不具合"]}, {"id": 0, "q": "以前にも相談に来てビデオも見たが、スライドパズルが上手くできない", "a": "スライドパズルのコツは理解されているとのことであったが、念のため、再度ご説明した。\nまた、スライドパズルアシストのアイコンを作成し、練習していただくことにした。", "device": "Android", "cats": ["スライドパズル", "不具合"]}, {"id": 0, "q": "検診ポイントを付けてほしい。\n歩数が正しく出ない。", "a": "健診結果と本人証明を確認し、ポイントを付与。\n歩数に関しては、バッテリーの最適化しない設定がされていなかったので、設定変更して再起動。", "device": "Android かんたんスマホ A205KC", "cats": ["歩数", "ポイント"]}, {"id": 0, "q": "①脳にいいアプリを消してしまったので、復活してほしい\n②スライドパズルの攻略法を知りたい", "a": "①ユーザIDを失念したので、ニックネーム、生年月日、名前を遠山様にお伝えしIDを確認して頂きました。アプリをインストールし、IDと生年月日からデータ引継ぎを行い、アプリを復活しました。\n②アプリ支援ガイドからの脳トレ->Q.スライドパズルの動かし方がわかりませんAスライドパズル練習ガイドを見るをタップし、YouTube解説動画のQRコードを表示し、当該QRコードを読み込んもらいました。その解説動画をチャネル登録しました。", "device": "Android AQUOS ssense5G", "cats": ["スライドパズル", "アプリ消失"]}, {"id": 0, "q": "画面が真っ白でアプリが立ち上がらない", "a": "電源の再立ち上げを行ったところ、脳にいいアプリが正常に動作した。　年末年始の通信状況が低下していたことも想定される。", "device": "Android かんたんスマホ", "cats": ["不具合"]}, {"id": 0, "q": "「てくポまちえみ」が出来ない", "a": "現在、企業の参加を募集しており、準備中であることをご説明。　準備が出来次第、都度拡大されていく予定であることをご説明。", "device": "未確認", "cats": ["まちえみ"]}, {"id": 0, "q": "・機種を変更したが、きちんと引継ぎができているか確認したい。\n・ポイントの使い方を教えて欲しい\n・歩数が増えていかない", "a": "・２台スマホをお持ちで、新しく購入したスマホにてくポがきちんと登録されているか確認したいとのことだったので、新スマホを確認したところ、ポイントが805P入っていたので、データの引継ぎはできていた。\n・旧スマホにも「脳にいいアプリ」をインストールされていたので、アプリを開こうとしたが、白い画面のまま、開かず、再起動を行い、モバイルWifiに接続したが、状況変わらず画面が白いままであった。\n・よく話しを聞くと、旧スマホも使っており、電話その他同様に使っているとのことでした。\n・てくポは、１人１台で、１ユーザーしか使えないことを説明し、旧スマホの「脳にいいアプリ」はアンインストールした。\n・ポイントの使い方について、２通りあり、ポイントをそのまま市内の登録されたお店で使えることと、PayPayに変換して使用できることを説明した。また、お店で利用する際のやり方を説明した。\n・歩数問題は、バッテリの「最適化しない」と「標準」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明。", "device": "Android OPPO A73", "cats": ["歩数", "ポイント", "機種変更", "使い方"]}, {"id": 0, "q": "脳トレのスライドパズルが難しい", "a": "スライドパズルアシストのアイコンを作成し、練習していただくことにした。　スライドパズルのコツについてもL型の作成などご説明した。", "device": "iPhone SE", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "「はっちお～じ　さん」はどうすれば出るのか？\nスマホが遅くなったと思えるので、大量のポイントの獲得履歴を消したい。\nスライドパズルも難しい。", "a": "「てくポまちえみ」に関して、準備状況をご説明。　順次ポイントが拡大されていくことを説明。\nポイント獲得履歴が多くても、スマホの処理速度に影響が出ることはないことをご説明。　不要なアプリを削除することや適度にスマホの再起動をしていただくようご依頼。\nスライドパズルに関しては、スライドパズルアシストを設定して練習していただくようお願いした。", "device": "Android かんたんスマホ", "cats": ["ポイント", "スライドパズル"]}, {"id": 0, "q": "・機種を変更したので、データの引継ぎをしたい", "a": "・最初は、スターとポイントを間違えていて、インストールしてデータの引継ぎもできているものと勘違いをしていたが、今まで来ていたお知らせが全く来なくなった\n・ユーザーIDを控えてくれていたので、そのユーザーIDで、データの引継ぎのインストールを行った\n・急ぎのため、バッテリの「最適化しない」の設定ができなかった", "device": "Android Pixel8a", "cats": ["機種変更"]}, {"id": 0, "q": "「てくポ」の使い方\n歩数が本体の歩数計と合わない", "a": "「てくポ」の使い方を説明\nその場で歩いたところ、両方38歩で合っていたが、本日の歩数は、本体6,833歩、てくポ3,910歩だった。最適化をしない、は設定済みだったので最初の1歩で歩数計上を確認してから使用するよう説明。", "device": "Android Arrows801FJ", "cats": ["歩数", "使い方"]}, {"id": 0, "q": "機種変更して（変更時期不明）引継ぎしたが、１か月（７月）間のポイントが消えてしまっている", "a": "再度、引継ぎすれば、新しく獲得したポイント等の情報が無くなる旨、説明し、このまま使っていただくとした。", "device": "nan", "cats": ["ポイント", "機種変更", "アプリ消失"]}, {"id": 0, "q": "機種変更したが引継ぎができていない", "a": "旧携帯をWiFiに接続してアプリを起動し、\nIDを確認", "device": "Android", "cats": ["機種変更"]}, {"id": 0, "q": "データの引継ぎ", "a": "受付時、待ち時間を聞かれ、長くなる旨伝えたところ、家でトライしてみてできなかったら再来訪する\nということで、帰られた。\n”てくポまるわかりブックのP.20を参照”を教示。", "device": "nan", "cats": ["機種変更"]}, {"id": 0, "q": "歩数が本体の歩数計と合わない\nPayPayへの振替え", "a": "最適化をしないは設定不可。\n使用していないアプリを一時停止をOFFに設定し再起動。\nその場で歩いたところ、両方の歩数は合っていた。最初の1歩で歩数の計上を確認してから使用するよう説明。\nPayPayとの連携処理後、振替え。", "device": "Android かんたんスマホ4 A402ZT", "cats": ["歩数"]}, {"id": 0, "q": "・機種を変更したので、データの引継ぎをしたい\n・ウォーキングチャレンジの「四国八十八ヶ所」の表示がおかしい", "a": "・機種変更のデータ引継ぎに関しては問題なく移行できていた\n・ウォーキングチャレンジの「四国八十八ヶ所」のチャレンジをしているが、「前神寺」から「三角寺」まで、64286歩であるが、スマホに出ている表示が、2,601,382歩を表示されていたので、「お問合せ」から問題を報告して、回答を得ることとした\n・バッテリを「制限なし」と「標準」に設定し、再起動を実施\n・User IDをメモすることを失念してしまいました", "device": "Android AQUOS wish5", "cats": ["機種変更", "ウォーキング"]}, {"id": 0, "q": "機種変更後引継ぎ処理を行ったが、いろいろ触っている内に脳にいいアプリが消えてしまった。", "a": "アプリを再インストールしデータ引継ぎ処置を実施。\nバッテリー設定：制限なし　に変更後、再起動。", "device": "Android Pixel6a", "cats": ["機種変更", "アプリ消失"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "新規にアプりをインストールし、てくポ申込を実施。\nモーションとフィットネス：ONを確認。\nポイントについて資料を元に説明。", "device": "iPhneSE", "cats": ["新規登録"]}, {"id": 0, "q": "・脳トレを教えて欲しい", "a": "・脳トレについて、まず全般的に詳しく説明を行った\n・スライドパズルの動画を見せて、「スライドパズル攻略の基本知識」をYoutubeで見られるように教えた\n・バッテリの「最適化しない」と「高感度」に設定済みとなっていた", "device": "Android 京セラ A001KC", "cats": ["脳トレ"]}, {"id": 0, "q": "「てくポ」を始めたい", "a": "「脳にいいアプリ」インストールと「てくポ」の申し込み。\n最適化をしないを設定し、再起動後に歩数確認。\nアプリの説明。", "device": "Android BASIO4 KYV47", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を始めたい", "a": "「脳にいいアプリ」インストールと「てくポ」の申し込み。\n最適化をしないを設定し、再起動後に歩数確認。\nアプリの説明。", "device": "Android BASIO4 KYV47", "cats": ["新規登録"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "新規にアプリをインストールし、てくポ申込を実施。\n歩数計設定：標準に変更、\nバッテリー設定：制限なしに変更後、再起動。\nポイントについて資料を元に説明。", "device": "Android らくらくフォン F-52B", "cats": ["新規登録"]}, {"id": 0, "q": "・機種を変更したが、ポイントが貯まってこない", "a": "・古い機種を持参したが、電池切れでアプリからユーザーIDが確認できず、遠山様に連絡し、町名、氏名、生年月日、ニックネームからユーザーIDを調査していただいた\n・「脳にいいアプリ」をアンインストールし、再度インストールを行い、今までのユーザーIDを入力しデータの引継ぎを行った\n・何故か、バッテリの「最適化しない」と「高感度」と設定がされていた", "device": "Android AQUOS wish4", "cats": ["ポイント"]}, {"id": 0, "q": "「てくポ」を始めたい", "a": "「脳にいいアプリ」はインストール済みだが画面が白くなり表示されなかった。再起動して解決。\n「てくポ」の申し込み。\nバックグラウンドでの使用が許可になっていることを確認。\nアプリの説明。", "device": "Android Pixel 8a", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を始めたい", "a": "「脳にいいアプリ」インストールと「てくポ」の申し込み。\nバックグラウンドでの使用の許可・長エネスイッチがOFFになっていることを確認。\nアプリの説明。", "device": "Android AQUOS sense8", "cats": ["新規登録"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "新規にアプリをインストールし、てくポ申込を実施。\n歩数計設定：標準に変更、\nバッテリー設定：制限なしに変更後、再起動。\nポイントについて資料を元に説明。", "device": "Xiaomi Redmi12 5G", "cats": ["新規登録"]}, {"id": 0, "q": "・友達に「脳にいいアプリ」をインストールしてもらったが、ポイントが増えない", "a": "・「脳にいいアプリ」はインストールされていたが、八王子市への申込みができていなかった\n・免許証にて、市への申込みを行った\n・アプリについて全般的に説明した\n・「脳にいいアプリ」をアンインストールし、再度インストールを行い、今までのユーザーIDを入力しデータの引継ぎを行った\n・バッテリの「制限なし」と「標準」を設定し、再起動実施", "device": "Android AQUOS wish4", "cats": ["新規登録", "ポイント"]}, {"id": 0, "q": "・新規にてくポを使用したい", "a": "・「脳にいいアプリ」をプレイストアからインストールしようと検索したところ、すでにインストール済みであったが、更新がされていなかったので、その場で更新を実施した\n・アプリを確認したところ、ポイントも貯まっていた\n・バッテリの「制限なし」、「標準」を設定し、再起動実施\n・アプリについて、全般的にご夫婦で一緒に説明を行った", "device": "Android AQUOS sense8", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を始めたい", "a": "「脳にいいアプリ」インストールと「てくポ」の申込み。\n最適化をしないを設定し、再起動後に歩数確認。\nアプリの説明。", "device": "Android BASIO", "cats": ["新規登録"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "アプリをインストールし\nその後、ポイントについて資料を基に説明。\n最後に、モーションとフィットネス：ONを確認。", "device": "iPhoneSE", "cats": ["新規登録"]}, {"id": 0, "q": "歩数がカウントしない8/4に来訪、最適化をしないを設定したが、歩数が本体歩数計と合っていない", "a": "その場で歩いたところ、両方の歩数は合っていたが、本日の歩数は、本体歩数計の1/2以下だった。最適化をしないの設定・活動記録の権限の許可が正しく設定されていることを確認。\n最初の1歩で、歩数計上をしない時があるのを発見。\n再起動するが解決しなかった。再インストールしたところ最初の1歩で計上されように見えましたが、様子をみることにし、解決していなかったら再度来訪していただくことにしました。", "device": "Android らくらく スマートフォン F-42A", "cats": ["歩数"]}, {"id": 0, "q": "歩数差が大きい\n\n\n\nスライドパズルが難しい", "a": "歩数計設定：標準　であったが\nバッテリー：最適化　となっていたので\n制限なしに設定後、再起動。\n\n動画を観てもらい、最初にL字を完成させることを試していただくとした。", "device": "Android arrows FCG02", "cats": ["歩数", "スライドパズル"]}, {"id": 0, "q": "PayPayへの振替え\nポイントとスターの違い\nスライドパズルのやり方", "a": "PayPayはインストール済み\n連携処理をして交換方法を説明\nポイントとスターの違いと使用方法を説明\nスライドパズルの実機とプリントでスライドパズル攻略法説明", "device": "Android", "cats": ["ポイント", "スライドパズル", "使い方", "スター"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "・脳にいいアプリの新規インストールと、バッテリーの最適化しない設定後に再起動\n・てくポの概要説明を実施", "device": "Android Arrows ８０１FJ", "cats": ["新規登録"]}, {"id": 0, "q": "ポイントが消えてしまった", "a": "アンインストール後、再インストールして引き継ぎ処理\n最適化を制限なしに設定して再起動、歩数確認", "device": "Android", "cats": ["ポイント", "アプリ消失"]}, {"id": 0, "q": "IDはどういうときに使うのか\n\n\nてくポポイントとスター獲得数との違い", "a": "機種変更、アプリを再インストールするときにデータを引き継ぐために必要である旨、説明。\n\nてくポポイントは指定の店で使用可およびPayPayポイントに交換して使用可である旨、\n一方、スター数は200ポイント毎に認知テストができることを実際にテスト画面がでるまでを説明。", "device": "Android Galaxy A41 SCV48", "cats": ["ポイント", "ID・ログイン", "スター"]}, {"id": 0, "q": "新しいスマホで「てくポ」を始めたい", "a": "古いスマホのユーザーIDを確認\n新しいスマホにインストールすると開発者モード解除のメッセージが表示\n開発者モード解除処理へ進むとPIN入力要請画面が表示\n相談者がPINコードを知らなかったので、再訪していただくことにしました", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリからQRコードを読もうとすると読めない。", "a": "・実際に、テスト用QRコードを読むと、playストアのベスプラ社脳にいいアプリのインストールメニューに切り替わった。\n・ベスプラの遠山様に確認したところ、BASIOではブラウザがchromeになっていないと出る現象とのこと。\n・ブラウザをchromeに切り替えることでQRコードの読み取りが正常化した。", "device": "Android 京セラ BASIO", "cats": ["QRコード"]}, {"id": 0, "q": "歩数が合わない", "a": "歩数計設定：標準　であったが\nバッテリー：最適化　となっていたので\n制限なしに設定後、再起動。", "device": "Android 楽々フォン F53E", "cats": ["歩数"]}, {"id": 0, "q": "歩数が合わない", "a": "歩数計設定：標準　であったが\nバッテリー：最適化　となっていたので\n制限なしに設定後、再起動。", "device": "Android 楽々フォン F53E", "cats": ["歩数"]}, {"id": 0, "q": "・アプリを削除してしまったので再度入れてほしい", "a": "・旧IDをメモで持参されたので、引継ぎ処理を実施した。　\n・電源の最適化しない設定と再起動実施。", "device": "Android galaxy", "cats": ["その他"]}, {"id": 0, "q": "アプリをアンインストールしてしまった", "a": "アプリを再インストールしデータ引継ぎ処置を実施。\nバッテリー設定：制限なし　に変更後、再起動。", "device": "Android Galaxy S22 SC-51C", "cats": ["新規登録"]}, {"id": 0, "q": "「脳にいいアプリ」が消えてしまった", "a": "相談者の記憶している場所とは別の位置でアイコンを発見\n起動すると真っ白い画面だったが、Playストアで更新処理することで解決\n最適化を制限なし、バックグラウンド時に実行を許可に設定\n再起動後、歩数確認\nアイコンをホーム画面に移動", "device": "Android", "cats": ["アプリ消失"]}, {"id": 0, "q": "・歩数が表示されないことがある。　食事の〇を付けると歩数が表示される。\n・スターは何に使えるか？", "a": "・スマホの設定を確認したが、バッテリーなどの歩数関連の設定は正常に設定されていた。　端末を再起動したところ、他の歩数計アプリと同じカウントが表示されたため、問題なしと判断。　スマホの動きが悪いとか表示がされないときなどは、再起動を行うことをお願いし、様子見とした。\n・スターに関しては、認知症検査への活用が出来ることをご説明した。", "device": "Android かんたんスマホ F-52B", "cats": ["歩数", "スター"]}, {"id": 0, "q": "新規", "a": "アプリをインストールし\nバッテリー設定：制限なし　に変更後、再起動。\nその後、ポイントについて資料を基に説明。\n最後に、モーションとフィットネス：ONを確認。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "スライドパズルのやり方", "a": "スライドパズルのビデオを視聴\nスライドパズルの実機とプリントでスライドパズル攻略法説明", "device": "Android", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "アプリを消したので、再度入れたい。\nスライドパズルが難しい。", "a": "・旧IDを森田様に確認していただき、引継ぎ処理を実施しようとしたが、エラーになったため、ベスプラの遠山様に確認。　IDで確認したところ、誕生日付が本人申告日と異なっており、エラーとなっていた。\n　ベスプラで確認した日付で一旦引継ぎ処理を行い、完了後に、誕生日の修正を行った。　完了後、バッテリーの最適化しない設定後に再起動。\n・スライドパズルのコツに関しては、ビデオのコーナーに誘導し、ビデオにて学習していただいた。", "device": "Android かんたんスマホ A001KC", "cats": ["スライドパズル"]}, {"id": 0, "q": "スライドパズルのやり方", "a": "スライドパズルの実機とプリントでスライドパズル攻略法説明\nスライドパズル攻略法ビデオを放映していることを告げる", "device": "Android", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "スライドパズル・間違い探しのやり方", "a": "スライドパズルの実機で説明\nプリントが切れてしまったのでパンフレット16PのQRコードで解説サイトに行けることを説明\n間違い探し攻略方法を説明", "device": "Android", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "てくポを始めたい", "a": "・脳にいいアプリの新規インストールと八王子市への申し込みを実施。\n・てくポの概略説明を実施。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリ起動時、初期化失敗　表示で止まる", "a": "再起動してみたが状況変わらず、確認を進め機内モードとなっていたのをオフにしたが、変わらず。WiFiに接続するとOKとなった。\nアプリとしては問題ないと判断し対応を終了とした。", "device": "Android AQUOS wish4", "cats": ["その他"]}, {"id": 0, "q": "歩数が合わない", "a": "歩数計設定：標準　であったが\nバッテリー：最適化　となっていたので\n制限なしに設定後、再起動。\nアプリバージョン：5.0.2.0だったので更新を実施。", "device": "Android 楽々フォン F42A", "cats": ["歩数"]}, {"id": 0, "q": "アプリを消してしまった。　再度アプリを入れたが、今まで出ていたメニューが出ない。", "a": "・確認したところ、市区町村が「八王子市」と入力されていなかった。\n・引継ぎ処理が必要と判断し、森田様に旧IDを確認していただき、旧IDで引継ぎ処理を実施。　念のために、最適化しない設定をして再起動。", "device": "Android かんたんスマホ Ａ２０１ＫＣ", "cats": ["アプリ消失"]}, {"id": 0, "q": "てくポのポイントが消えてしまった", "a": "アンインストール後、再インストールして引き継ぎ処理\n最適化をしないに設定して再起動、歩数確認", "device": "Android", "cats": ["ポイント", "アプリ消失"]}, {"id": 0, "q": "アプリを消したため、再インストールしようとしたが、不安になって途中で止めて相談に来た。", "a": "・スマホを確認したところ、幸いに引継ぎに分岐する直前の画面で止まっていた。\n・旧IDを森田様に確認していただき、引継ぎ処理を行うことにした。　旧IDと誕生日を入力して引継ぎを行おうとしたが、入力エラーとなり、ベスプラの遠山様に確認したところ、誕生日の登録がされていない方であった。　\n・誕生日の登録をベスプラにて実施していただき、無事引継ぎ処理が実施できた。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "再度、ネットが繋がらないと再々来訪", "a": "WiFiを切って、原因を調査したところ\n基本となるモバイルデータ通信モードがオフされていた。\nオンにして動作することを一緒に確認。", "device": "項番２０の方", "cats": ["その他"]}, {"id": 0, "q": "歩数が合わない", "a": "この日はスマホ本体の歩数計の半分の歩数しか計上されていなかった\n試しに35歩歩いてみたが、スマホ本体・「てくポ」ともに35歩と差異はなかった\n最適化を制限なしに設定後、再起動し歩数確認\nやはりスマホ本体・「てくポ」ともに35歩で効果を確認できなかった\n実際に使用して確認していただくことになり、変化が見られない時は再訪していただくことにしました", "device": "Android", "cats": ["歩数"]}, {"id": 0, "q": "機種変更", "a": "アプリを再インストールしデータ引継ぎ処置を実施。\nバッテリー設定：制限なし　に変更後、再起動。", "device": "Android 楽々フォン A401FC", "cats": ["機種変更"]}, {"id": 0, "q": "脳にいいアプリに関する不明点の確認をしたい。\n　・食事に肉がない\n　・脳トレの対戦相手を５秒ぐらい\n　　で決められるのが不思議だ", "a": "・食事の種類は、脳にいい食材が設定されている。　認知症予防には脳にいい食事を摂ることが大事ということで、肉は入っていないことをご説明。\n・脳トレの対戦相手は、全国のアプリ利用者の中から、同一番付クラスの方をコンピュータが選んで決めている。　対戦相手がすぐ決まるのは、リアルに対戦しているのではなく対戦者が行った時のタイム（情報）と対戦しているのでコンピュータで瞬時に相手が決められることを説明。", "device": "iPhone", "cats": ["脳トレ"]}, {"id": 0, "q": "「脳にいいアプリ」をバージョンアップしてほしい", "a": "「脳にいいアプリ」は最新バージョンだった\n本日は来られなかったご主人のバージョン確認もしたいとのこと\nPlayストアで更新ボタンがあれば更新し、開くボタンだったら最新バージョンなのでそのままで大丈夫だと説明", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "歩数および歩数ランキングの表示について", "a": "歩数目標値と本日の歩数値についてと\nランキング表示画面には当日の歩数値が反映されるが、タイミングにより多少異なった数値の場合がある旨、説明。\nバージョンが5.0.2.0だったので更新を試みたが、あまりにも進まなかったので了解をいただき断念した。", "device": "iPhoneXr", "cats": ["歩数"]}, {"id": 0, "q": "＃3の相談者の方が家に一度帰り、PINコードを確認されて再訪されました", "a": "開発者モード解除処理を行い、引き継ぎ処理完了\nバックグラウンドで実行に設定後、再起動と歩数確認", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "・ご主人の代理で相談に来られた。\n　ご主人の携帯と身分証明（免許証）をご持参。\n・脳にいいアプリが消えた。", "a": "・森田様にIDの確認をしていただき、アプリのインストールと引継ぎ処理を実施して完了。", "device": "Android Arrows FCG02", "cats": ["アプリ消失"]}, {"id": 0, "q": "・アプリの操作を説明してほしい。\n立ち上げ時の「お知らせ」を「お知らせ」を「いいえ」を選択すると　次に進まない。「はい」を選択して読み込むとホーム画面になる。\n・健康診断の結果でポイント付加してほしい。\n・脳トレ「まちがい探し」のコツを教えてほしい。\n・健康管理の登録方法を教えてほしい。", "a": "・「お知らせ」を「いいえ」でスキップできない件は現象再現せず　原因不明です。ストレージの容量128GB　93％使用中（119.2GB）\n再起動で様子を見て頂くことになりました。\n・健康診断は書類と本人を確認し。30ポイント付加しました。\n・「まちがい探し」は正しい絵と交互に見て異なる部分を見つけてください。\n・健康管理は実際に登録をして説明しました。", "device": "Android Galaxy A53", "cats": ["新規登録", "ポイント", "脳トレ", "健診ポイント", "使い方"]}, {"id": 0, "q": "機種交換の引継ぎ処理をしたい（自分でトライしたが出来なかった）\n旧IDは、メモで持参。", "a": "新機種から脳にいいアプリをアンインストールし、新規に引継ぎを行って再インストールを実施。\nバッテリーの最適化しない設定と再起動を実施。", "device": "Android galaxy S25", "cats": ["機種変更", "ID・ログイン"]}, {"id": 0, "q": "「てくポ」の申し込み", "a": "「脳にいいアプリ」はインストール済みで「てくポ」の申し込みを実施。最適化をしない設定にして、再起動と歩数チェック。「てくポ」の使い方を説明。ウォーキングチャレンジを開始した。", "device": "Android Arrows", "cats": ["その他"]}, {"id": 0, "q": "てくポが出来ない。（動かない）", "a": "アイコンをタップしてもアプリが起動しない状態であった。\n確認したところ、「機内モード」になっており、データ通信が使えない状態であった。　ご高齢の方で、いつの間にかさわってしまったと推察。　機内モードを解除して通常にアプリがたちがるようになった。　バッテリーの設定も最適化になっていたため、設定を変更して再起動。", "device": "Android BASIO KYV ４７", "cats": ["不具合"]}, {"id": 0, "q": "・歩数カウントの方法を知りたい。\n・ポイントの付く方法を知りたい。\n・プロフィールのアイコンを写真にしたい。\n・スターの使い方を知りたい。", "a": "・スマホの機種ごとに歩数センサが内臓と非内臓の2タイプがあります。\n・まるわかりブックP5で説明しました。\n・表示されたアイコン一覧から選択してください。\n・認知機能テストに使用できます。", "device": "Android Pixel 7a", "cats": ["歩数", "ポイント", "使い方", "スター"]}, {"id": 0, "q": "「脳にいいアプリ」を削除してしまった\nスターの説明\n歩数が合わない", "a": "「脳にいいアプリ」を再インストールして引き継ぎ処理実行。\n最適化をしないに設定して再起動と歩数チェック。\nそれでも歩数が合わない時は、最初の一歩で歩数がカウントするか確認するよう説明。\nスターの説明。", "device": "Android AQUOS", "cats": ["歩数", "スター"]}, {"id": 0, "q": "てくポを新規に始めたい", "a": "脳にいいアプリを新規にインストールし、八王子市への申し込みを実施。　最適化しない設定を行い再起動。\nてくポに関する使い方など概要を簡単にご説明。　ご家族（娘さん？）が同行されていたため、帰宅後もサポートしていただける様子であった。", "device": "Android pixel 8a", "cats": ["新規登録"]}, {"id": 0, "q": "脳トレの終了画面がいつもと違う。\n最終画面で「おつかれさまでした」\n「あなたの能力図」「総合評価」\n「もう一回脳トレをする」「おしまいにする」の文字が表示されない。グラフのみ表示される。その時画面をタップすると\n一瞬「脳トレはじめましょう」後\n「脳トレ対戦者決定」が表示され、\n2回目の対戦が始まる", "a": "・遠山さんにサポートを依頼しました。\n・GoogleChromeのアップデート確認　最新です\nAndroid　OS　8.0\n現象を写真で遠山様にお送りしました。\n「脳にいい」アプリを再インストールをしましたが\n現象は再現します。\n脳トレの終了方法をお教えし、問題が解決するまでお待ちくださいと伝えました。", "device": "Android F01L", "cats": ["脳トレ"]}, {"id": 0, "q": "・スマホを操作している時に「アカウントの入力要求」が出た。　よくわからないので相談に来た。\n・ポイントはどうすれば使えるのか？", "a": "てくポの脳にいいアプリを利用する際には、アカウント入力を要求するようなことはないことをご説明。\nおそらく、てくポ以外の操作をされていた時に出た現象であると推察。\n・貯まったポイントは、希望のお店にスマホを持参して、お店で使いたいと申請することで使えることをご説明。（お店での操作はお店側で教えていただけることで納得された）", "device": "iPhone", "cats": ["ポイント", "使い方"]}, {"id": 0, "q": "歩数が合わない", "a": "最適化をしないは設定済み。バックグラウンド時に実行、自動調整バッテリーをOFFに設定。再起動後歩数確認。それでも歩数が合わない時は、最初の一歩で歩数がカウントするか確認するよう説明。", "device": "Android Xperia S041B", "cats": ["歩数"]}, {"id": 0, "q": "てくポを新規に始めたい", "a": "脳にいいアプリを新規にインストールし、八王子市への申し込みを実施。　最適化しない設定を行い再起動。\nてくポに関する使い方など概要を簡単にご説明。", "device": "Android galaxy S21 SCG09", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」の引き継ぎ処理", "a": "遠山様に旧ユーザーIDを調べていただき、引き継ぎ処理。最適化を制限なしに設定後、再起動と歩数チェック。本日の体温の入力方法を説明。", "device": "Android BASIO active", "cats": ["機種変更"]}, {"id": 0, "q": "てくポを新規に始めたい", "a": "脳にいいアプリを新規にインストールし、八王子市への申し込みを実施。　最適化しない設定を行い再起動。\nてくポに関する使い方など概要を簡単にご説明。　\nゲームが好きということで脳トレに関心を持たれた。", "device": "Android Redmi 12 Xianmi Hyper OS", "cats": ["新規登録"]}, {"id": 0, "q": "健康診断ポイント獲得", "a": "身分証明証をお持ちでなかったので、住所と生年月日を尋ね、健康診断表と相違ないことを確認し、ポイントを付与。次回からは身分証明証を持参することをお願いしました。", "device": "nan", "cats": ["ポイント", "健診ポイント"]}, {"id": 0, "q": "てくポを始めたい\n新規インスト―ル", "a": "「脳にいい」アプリをインストール及びてくポ申請を実施しました。てくポまるわかりブックを使用して概要を説明しました。アプリの歩数設定「標準」\nバッテリー使用量「最適化しない」に設定後\n再起動を実施しました。", "device": "Android FCG02", "cats": ["新規登録"]}, {"id": 0, "q": "歩数が計上されない", "a": "使用しない時の制限を解除して、再起動と歩数チェック。\nそれでも歩数が合わない時は、最初の一歩で歩数がカウントするか確認するよう説明。", "device": "Android Xiaomi", "cats": ["歩数"]}, {"id": 0, "q": "てくポの画面が白くなって動かなくなった。　触っているうちにアプリを消してしまった。　再度インストールにトライしたが、できなかった。", "a": "確認したところ、引継ぎもできず、八王子市への申し込みなどもできていない状況であった。\n旧IDをベスプラの遠山様に電話で確認をお願いし、判明したため、脳にいいアプリの引継ぎでの再インストールを実施。\nID問い合わせの際、誕生日の初期登録が間違っておられたため、引継ぎ後に誕生日を正しい日付に変更。\nバッテリーの設定を変更して再起動。", "device": "Android 京セラ KYV 47", "cats": ["新規登録", "アプリ消失"]}, {"id": 0, "q": "てくポを始めたい\n新規インスト―ル", "a": "アプリのダウンロードでパスワードが必要です。\n来週　もう一度来訪されます。", "device": "iPhone 16e", "cats": ["新規登録"]}, {"id": 0, "q": "・「脳にいいアプリ」が起動しない", "a": "・再起動を実施。\n・Androidスマホだったので、バッテリの「制限しない」と「標準」に設定して、再度、再起動実施した。", "device": "Android Galaxy A25", "cats": ["その他"]}, {"id": 0, "q": "画面が途中で止まり停止していまう", "a": "途中停止画面を上スワップで削除し脳にいいアプリを再起動で正常に起動。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "てくポ新規申請", "a": "てくポ申請後、歩数設定：省電力→標準に\nバッテリー：最適化→最適化しない　に変更後再起動。\nその後、アプリ画面に沿って機能ならびにポイント取得等について説明。", "device": "Android Basio4 KYV47", "cats": ["新規登録"]}, {"id": 0, "q": "・今まで、アプリを使っていたが、いつの間にかなくなっていた。また利用したい。", "a": "・ユーザーIDが分からず、氏名、町名、生年月日、ニックネームをお聞きしたが、ニックネームは忘れたとのことで、遠山様に連絡し、ユーザーIDを調査していただいた。しかし、生年月日の登録がなく、調査と生年月日の登録に時間がかかってしまった。\n待ち時間の間に、脳トレやアプリに関していろいろ説明を行った。\n・バッテリを「制限なし」と「標準」に設定し、再起動を実施。", "device": "Android 京セラ A201KC", "cats": ["アプリ消失"]}, {"id": 0, "q": "歩数がカウントしなくなった", "a": "設定の確認ではすべて問題なく、再起動も数回実施したが様子は変わらず、保坂様と相談の上、問い合わせフォームに問い合わせさせてもらい、その返答を受けて再来訪をお願いした。", "device": "Android らくらくフォン A401FC", "cats": ["歩数", "アプリ消失"]}, {"id": 0, "q": "ポイントが付くようにしたい", "a": "免許証にて登録を行い、ホーム画面の説明、テクポ情報の説明、QRコードを読むの説明、健康管理の説明、当該スマホ向け歩数計の設定等を実施。登録を行ってからポイントがつくには最長2日から3日かかることを説明。", "device": "Android AU BASIO", "cats": ["ポイント"]}, {"id": 0, "q": "ポイントが付くようにしたい", "a": "1番の方の配偶者で、新規にインストールを行い、免許証から八王子市への申込みを行った。アプリに関して、奥様と一緒に全般的に説明を行った。", "device": "Android AU BASIO", "cats": ["ポイント"]}, {"id": 0, "q": "健康ポイント付与希望", "a": "身分証明（免許証）確認してQRコードを提示し付与。\nその後、ポイント取得可能項目について説明。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "歩数が8月初め頃からカウントしない", "a": "脳にいいアプリをアンインストーし、再インストールを実施。\n引継ぎ作業をした後、歩数設定：省電力→標準に\nバッテリー：最適化→最適化しない　に変更後再起動。\nカウントする様になった。", "device": "Android Arrows wish4", "cats": ["歩数"]}, {"id": 0, "q": "・脳トレを教えて欲しい、特に「スライドパズル」と「ジグソーパズル」が分からない", "a": "・「スライドパズル攻略の基本知識」の動画を見ながら、説明を行った。また、「スライドパズル完全解説」と「スライドパズルをプレイする」をスマホにインストールして、スマホの中で、内容の説明と使い方の説明を行った。\n・ジグゾーパズルについては、「パネルが全く動かない」と言われましたので、パネルがきちんと正しい場所に持っていかないと動かないことを説明した。動かすコツを教えた。\n・バッテリを「制限なし」と「標準」に設定し、再起動を実施", "device": "Android AQUOS wish2", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "歩数カウントが少ない", "a": "設定を確認するもすべて問題なしであることを説明。\n他のソフトとは異なることは理解されており、仕方がないかと帰途された。", "device": "Android Arrows wish3", "cats": ["歩数"]}, {"id": 0, "q": "スマホとタブレットのIDを同じにできないか？\n持ち歩くのはスマホ、家で観るのはタブレットとしたいとのこと", "a": "1個人に対して1端末１IDであることを説明して、不可と回答。", "device": "nan", "cats": ["不具合", "ID・ログイン"]}, {"id": 0, "q": "てくポを開こうとするとかなりの時間がかかる。", "a": "藤原様にもサポートを頂き、問題点の切り分けを実施。Wimaxで行うと幾分時間を要したが、開くことが出来た。結論としては、電波受信感度悪くダウンロードに時間を要しているので、AUショップに相談されることをおすすめした。", "device": "Android AU BASIO", "cats": ["その他"]}, {"id": 0, "q": "・お友達紹介のやり方を教えて欲しい（紹介した方のユーザーIDを持参した）\n・脳トレの「スライドパズル」と「間違い探し」について、教えて欲しい\n（以前、クリエイトホールで新規にインストールされた方）", "a": "・紹介してもらった方のユーザーIDを使って、お友達紹介の手続きを行った。\n・脳トレについて、まず全般的に詳しく説明を行った\n・スライドパズルの動画を見せて、「スライドパズル攻略の基本知識」をYoutubeで見られるように教えた\n・バッテリの「最適化しない」と「標準」は、すでに設定されていた。", "device": "Android AQUOS sense4 lite", "cats": ["新規登録", "スライドパズル", "脳トレ", "ID・ログイン", "使い方"]}, {"id": 0, "q": "健康ポイント付与希望", "a": "身分証明（免許証）を確認してQRコードを提示し付与。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "健康管理情報の入力\n　いうでも良いか？", "a": "いつでも良いと回答。それでOKだった模様で直ぐに引き揚げられた。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "・八王子市への申込みがしたい\n・アプリについて、教えてほしい", "a": "・「脳にいいアプリ」はインストールされていたが、八王子市への申込みができていなかった\n・健康保険証にて、市への申込みを行った\n・アプリについて、時間は過ぎていたが、アプリに関して全般的に説明した\n・バッテリの「最適化しない」と「標準」を設定し、再起動実施", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "てくポを新規に始めたい", "a": "てくポの概要説明し、脳にいいアプリの新規インストールと八王子市への申し込みを実施。\n小冊子を使用してくポの利用方法をご説明。\n最適化しない設定と再起動を実施。", "device": "Android AQUOS sense 4", "cats": ["新規登録"]}, {"id": 0, "q": "スマホ買い替えによるデータ引継ぎ", "a": "旧スマホ持参だったので、新スマホに「脳にいいアプリ」をインストールし、ユーザーIDを入力してデータの引継ぎ処理を行いました。「最適化をしない」設定を失念していました。申し訳ありません。", "device": "Android Pixel 9", "cats": ["機種変更"]}, {"id": 0, "q": "てくポはインストールされ、市への申込みもしているが、どのように使ってよいのかわからないので教えて欲しい。", "a": "・小冊子を見ながら、スマホの画面と合わせて、ポイントの貯め方から、アプリの使い方を全般的に説明した。", "device": "iPhone SE", "cats": ["新規登録"]}, {"id": 0, "q": "地域活動参加場所でQRコードが上手く読めない（読み取りが遅い）", "a": "脳にいいアプリのバージョンを確認したところ最新であった。\n試しに、テスト用QRコードを読み取ったが、問題なく読み取れた。　念のために、スマホの再起動を行い、再度読み取りのテストを行ったが、問題なかったので対応を完了した。", "device": "Android BASIO Active 2", "cats": ["QRコード"]}, {"id": 0, "q": "スマホ本体の歩数計に比べ歩数が少ない", "a": "「バックグラウンドでの使用」は許可されていたが、「最適化をしない」設定が見つかりません。森山様にも手伝っていただき探した結果「バックグラウンドでの使用」項目の下の階層にありましたが「最適化しない」になっていました。遠山様に問い合わせ、再起動の指示をいただき実行。以前に他の場所で設定してもらったようで、その時再起動はしていなかった模様。時々再起動するよう説明しました。また、最初の一歩目にカウントが１つ進まない場合は、手で振ってカウントされるようになってから歩くようにもアドバイスをいただきました。確認したところ最初の1歩でカウントされないことがあったので、その旨を伝えました。", "device": "Android AQUOS wish4", "cats": ["歩数"]}, {"id": 0, "q": "画面が真っ白になる", "a": "不具合の問題であるが、アプリの再起動などで使用できることとして、対応を完了。", "device": "ー", "cats": ["不具合"]}, {"id": 0, "q": "ウォーキングチャレンジが正常に表示されない。（現在場所等表示されない）\nポイントも消えてしまった。", "a": "スマホの買い替えや、アプリの再インストールなどを行っていないかを確認したが、ご本人は「何もしていない」と主張された。　高齢者いきいき課の森山様に相談したところ、まずは、ユーザIDを確認することを森山様にサポートいただいた。\n結果、やはりユーザIDが変わっており、アプリを入れなおされたものと思われる。（多分、ご家族がされたか？）\n結果、旧IDを使用して引継ぎ処理を行い、ポイントや累計歩数の復活が出来た。\n最適化しない設定に変更し再起動して完了。", "device": "Android A205KC", "cats": ["ポイント", "アプリ消失", "ウォーキング"]}, {"id": 0, "q": "てくポを使いたい", "a": "・「脳にいいアプリ」のインストール及びマイナンバーカードにより八王子市への申込みを行った。\n・小冊子を見ながら、スマホの画面と合わせて、ポイントの貯め方から、アプリの使い方を全般的に説明した。\n・バッテリの「最適化しない」と「標準」に設定し、再起動を実施した。", "device": "Android シニア向け", "cats": ["その他"]}, {"id": 0, "q": "余白", "a": "余白", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "新規登録説明会参加者①", "a": "てくポの新規登録説明会に参加され、脳にいいアプリの新規インストールとてくポの全体概要をご説明した。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録説明会参加者②", "a": "同上。\n但し、アプリのインストールはご家族にてされていたため、八王子市への申し込みから対応した。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "・「脳にいいアプリ」のインストールはしているが、八王子市への申込みをしていない", "a": "・マイナンバーカードによって、八王子市へ「てくポの申込み」を行った。\nその後、アプリの説明を一通り行った。\n・バッテリの「最適化しない」と「標準」に設定し、再起動を行った。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "ご本人がアンインストールしてしまってので、再度インストールをお願いします。", "a": "完了", "device": "nan", "cats": ["新規登録"]}, {"id": 0, "q": "脳トレが難しい問題がある。\n　・まちがい探し\n　・スライドパズル\n　・Nパック課題", "a": "まちがい探しに関しては、「正しい絵を見る」ボタンの活用を説明\nスライドパズルに関しては、説明動画を見ていただいて、L型の作成をトライいただくことを理解いただいた。\nNパック課題に関しては、問題の解釈を間違って理解されており、比較対象となる文字の正しい考え方をご理解いただいた。", "device": "Android pixel ９", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "ポイント使用についてお聞きしたい", "a": "ポイントについての説明と八王子市提携での利用の仕方を説明しました。", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "・操作ミスでアプリを消してしまったので復旧してほしい\n・「スター」の活用を知りたい", "a": "・高齢者いきいき課の森田様にサポートいただき、IDを確認いただいて脳にいいアプリの再インストールと引継ぎ処理をして完了。\n・スターに関しては、認知症検査の無料チケット交換に活用できることをご説明。　操作メニューに関してもご説明。（森田様にもご支援頂いた）", "device": "Android", "cats": ["アプリ消失", "使い方", "スター"]}, {"id": 0, "q": "・歩数が増えていかない。\n・去年12月にスマホが壊れて、データを引き継ぐために、市へ電話したら、サポートセンターを紹介され、そこに電話をかけその際に、ユーザーIDを伝えたが、サポートセンターの対応した人がメモを取らずにその後ユーザーIDが消えてしまった。過去のポイントがどのようになったのか確認したい。", "a": "・「脳にいいアプリ」　5,735歩　　「スマホの歩数計」　7,384歩とその差1,649歩と大幅に数値が違っていた。\n・バッテリの「最適化しない」と「高感度」の設定になっていることを確認。\n　これは、以前南口での相談の際、変更してもらったとのこと。\n・機種によって、「バッテリの最適化しない」、「高感度」に設定しても、歩数カウントが増えない機種もあることを説明した。また、「脳にいいアプリ」のお問い合わせに、歩数が合わないことの情報を入力して、サポートセンターからの対応をお願いすることにした。\n・ポイントの引継ぎについては、森田様が高齢者いきいき課へ確認の電話をしていただき、その内容も説明していただきました。\n・ポイントの履歴を見ると、23年に登録のボーナスポイントをもらい、24年12月には、スマホが壊れたが、その後、データの引継ぎが行われて、ポイントも引継ぎがされていることを確認できた。", "device": "Android AQUOS wish4", "cats": ["歩数", "ポイント", "機種変更", "アプリ消失", "ID・ログイン"]}, {"id": 0, "q": "脳にいいアプリの1日の歩数を別アプリで管理しているがそのアプリを起動すると違う画面が出てくる", "a": "本案件は脳にいいアプリとは関係ないので本来は対応不可と申し上げた上で、当該アプリの上に広告アプリが乗っているだけだったので、右上の×を押して削除することを教示", "device": "nan", "cats": ["歩数"]}, {"id": 0, "q": "新規登録", "a": "概要説明、脳トレアプリインストール、登録申請", "device": "Android、AQUOS Wish3", "cats": ["新規登録"]}, {"id": 0, "q": "機種変更をしたのでアプリを入れてほしい", "a": "旧ユーザIDをベスプラの遠山様に確認し、引継ぎ処理を行った。\nバッテリーの最適化しない設定を行って再起動をして完了。", "device": "Android Xperia A402 SO", "cats": ["機種変更"]}, {"id": 0, "q": "脳にいいアプリが消失", "a": "Google playストア起動でパスワード云々のメッセージでここを通過できず、ここがクリアになってからの来訪をお願いした。", "device": "Android Aquos sense6", "cats": ["アプリ消失"]}, {"id": 0, "q": "歩数が少ない", "a": "確認したところ、バッテリーの最適化しない設定は問題なかった。\nただ、歩数計設定の「歩行ペース」がOFFとなっていたので、「ON」に切り替えた。　確信の対策ではなかったが、　再起動後に、実際に歩いていただいたところ、脳にいいアプリと別歩数アプリのカウントアップが一致（＋140歩）したため、本設定で様子を見ていただくことにした。", "device": "Android Xperia SO-41B", "cats": ["歩数"]}, {"id": 0, "q": "新規登録", "a": "概要説明、脳トレアプリインストール、登録申請\n歩数設定：標準、バッテリー設定：最適化しない　とし、再起動。", "device": "Android らくらくフォン F-53E", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録", "a": "概要説明、脳トレアプリインストール、登録申請\n歩数設定：標準、バッテリー設定：最適化しない　とし、再起動。", "device": "Android らくらくフォン Aquos SHG09", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリはインストール済で\nてくポ未申請", "a": "八王子市登録をし、てくポ申請を実施。\nホーム画面の機能説明ならびにてくポのポイント取得に関してまるわかりブックを使って説明。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "脳にいいアプリをインストールし、てくポの概要説明を行った。　待ちの方が増えたため、説明は簡単に実施。", "device": "Android らくらくホン KYV47-u", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリ起動時、白画面で止まる", "a": "途中停止画面を上スワップで削除することで正常に起動することを教示。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "脳トレのパズル問題が難しい", "a": "相談前に、ビデオを見ておられたため、L型の作成など、スライドパズルのコツを模型でご説明した。", "device": "Android らくらくホン A001KC", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "脳にいいアプリが消失", "a": "脳にいいアプリをインストールし、引継ぎ作業を実施。その後、\n歩数設定：省電力→標準に\nバッテリー：最適化→最適化しない\nに変更後再起動。", "device": "Android Google Pixel8a", "cats": ["アプリ消失"]}, {"id": 0, "q": "健康ポイント付与希望", "a": "身分証明（免許証）を確認してQRコードを提示し付与。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "歩数計がカウントされない", "a": "てくぽ内歩数計設定の感度確認（標準）、歩行ペースONを確認。スマホ本体内バッテリー使用量確認、最適化ー＞無制限に変更", "device": "Android Xperia", "cats": ["歩数"]}, {"id": 0, "q": "脳にいいアプリが起動しない（白紙の様）", "a": "実行中のタスクの中から脳にいいアプリを探し、削除しリセット。", "device": "Android oppo Rena11A", "cats": ["その他"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "脳にいいアプリをインストール始めたが、５分程度経過してもインストールの進捗がほどんど進まないため、Wifi接続に切り替えた。\nところが、それでもインストールが遅いため、中断して、スマホの再起動を行い、改めて脳にいいアプリのインストールを行ったところ、インストールの速度は回復。\n脳にいいアプリをインストール始めた時点で、開発者モードの設定がされていることが判明し、開発者モードの解除を行った。\nその後、無事に八王子市への申し込みを完了し、簡単にてくポの概要をご説明。", "device": "Android BASIO active２", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリが消失", "a": "脳にいいアプリをインストールし、引継ぎ作業を実施。\nその後、バッテリー：最適化→最適化しない　に変更後再起動。", "device": "Android BASIO active２", "cats": ["アプリ消失"]}, {"id": 0, "q": "①パズルのやり方\n②活動履歴の見方\n③てくぽポイントの見方", "a": "①スライドパズルを用い実践した。\n②メニューから活動履歴参照。　\n③てくぽ情報からてくぽ情報参照", "device": "Android BASIO Active2", "cats": ["ポイント", "スライドパズル", "使い方"]}, {"id": 0, "q": "脳にいいアプリ起動時、白画面で止まる", "a": "途中停止画面を上スワップで削除することで正常に起動することを教示。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "スライドパズルが難しい", "a": "・時間も少なかったため、まず、模型でL型の作成などコツをご説明した。\n　その後、配備のチラシに掲載されているQRコードを読んでいただき、YouTubeでスライドパズル攻略の基本ルール動画を見ることをご教示した。", "device": "iPhone", "cats": ["スライドパズル"]}, {"id": 0, "q": "健康ポイント付与希望", "a": "身分証明（免許証）を確認してQRコードを提示し付与。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "脳にいいアプリの画面が真っ白になってしまう", "a": "・スマホの再起動を行ったところ、正常にアプリが立ち上がった。\n・追加作業として、最適化しない設定をして再起動し完了。", "device": "Android Arrows A101FC", "cats": ["不具合"]}, {"id": 0, "q": "新規登録説明会参加者①", "a": "てくポまるわかりブックに沿って脳にいいアプリ、てくポポイント等について説明。\n次に、\n脳にいいアプリのインストールおよびてくポ申請処理を実施。\n脳にいいアプリの各機能を説明。\n最後に歩数設定およびバッテリーの非最適化後再起動して終了。", "device": "Android Galaxy A51 5G", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録説明会参加者②", "a": "同上", "device": "Android Galaxy SM-A750C", "cats": ["新規登録"]}, {"id": 0, "q": "てくポを新規に始めたい。　\n時間が無いので短時間でやってほしい。（要求は２０分程度）\n登録後に友達紹介をしたい。（相手がガラケーで無理だと理解された）\nご自身のギガが通信量限度ギリギリなのでWifiにつなぐか誰かの携帯につないでやってほしい。（自宅でもWifiが無いのでつないでいないとのこと）", "a": "・まず、開催要領を理解されないで来場されていたが、前半の新規説明会の途中に入場されての即対応を要求された。　いつかは不明だが、「いつ行っても良い」と市役所に電話して聞いていたので、時間内に来たのだから今すぐにやってほしいとの要請。\n・新規説明会の途中であったが、個別対応を開始。\n・Wifiは用意したポケットWifiに接続しようとしたら、上手く接続できず。　\n結局は、説明員も含めて数台接続していたため、接続のキャパを超えたのが要因だと判明。\n・Wifi接続後に、登録を行い、インストール完了。　時間が無いのでてくポの内容説明は不要と言っておられたが、結局は、色々質問が出て対応した。\n・主に、ポイント付与のタイミングが一番の関心事であったことと、同行された知人がスマホではなくフューチャーフォン（ガラケー）であったが、ガラケーでてくポが出来ないのがご不満の様子だった。（森田様にてご説明）", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリの画面が真っ白になってしまう", "a": "再起動で正常に起動すること\nならびに\nバッテリーおよび歩数設定を確認。", "device": "nan", "cats": ["不具合"]}, {"id": 0, "q": "機種を無くし新しくしたが、無くした機種が出てきたので、新機種はクーリングオフされ、旧機種でデータを引き継ぎたい", "a": "脳にいいアプリを再インストールし、データ引継ぎ処理を実施。\nその後、\n歩数設定およびバッテリーの非最適化をし、再起動。", "device": "Android pixel ９", "cats": ["機種変更"]}, {"id": 0, "q": "「脳にいい」アプリの使い方を知りたい", "a": "てくポまるわかりブックを使用して「ポイント一覧」\n「歩数」「「脳トレ」「食事」のメニューを説明しました。\n「スライドパズル」を動画で説明し「まちがえ探し」は実践して説明しました。", "device": "iPhone14", "cats": ["使い方"]}, {"id": 0, "q": "脳にいいアプリの使い方全般を知りたい。　これまで、ほとんど使っていなかった。", "a": "・脳トレと食事に関してはやったことがないとのことであり、おそらく歩数だけのポイント獲得をされていた。　ポイント獲得が出来ていることもご理解されていなかった。\n・ポイント獲得のケースを冊子を使ってご説明し、脳トレの種類をご説明、食事に関しても品目の考え方をご説明。　概要を説明するレベルで良かった感じである。", "device": "Android かんたんスマホ 京セラ A001KC", "cats": ["使い方"]}, {"id": 0, "q": "・歩数が増えていかない", "a": "・バッテリの「最適化しない」と「標準」に設定後、再起動を実施し、ご自分で実際に歩いていただいた。　結果\n・「脳にいいアプリ」設定前1,313歩　設定後1,408歩　差105歩\n・「歩数計」　設定前2,192歩　設定後2,297歩　差105歩\n・納得されてお帰りになりました。", "device": "Android AQUOS", "cats": ["歩数"]}, {"id": 0, "q": "機種変更後、ポイントが反映されているかの確認", "a": "引継ぎ(データ移行)をしないと旧端末でのポイントは反映されない旨説明。\n新端末においてもポイントがそこそこ貯まっていたため、このままで良いとのことで、歩数設定及び、バッテリー設定に問題ないことを確認。", "device": "Android Galaxy Pixel8a", "cats": ["ポイント", "機種変更"]}, {"id": 0, "q": "八王子市への申込をしてほしい", "a": "健康保険証で八王子市への申込を実施しました。\n後の説明はパンフレットを見るとのことでした。", "device": "Android F-53E", "cats": ["その他"]}, {"id": 0, "q": "歩数がカウントされない", "a": "歩数設定を標準に、バッテリー設定を制限なしに\nそれぞれ設定し、再起動を実施。", "device": "Android mota g53y 5G", "cats": ["歩数"]}, {"id": 0, "q": "・QRコードが使えない\n・PayPayにポイントを移行したい", "a": "・テスト用のQRコードを読み込んだところ、正常に読み取れる状態になっていた。（５月初めころ、QRコードを読み込んだ時にNGだったようです。）\n・QRコードの読み取りは「脳にいいアプリ」と「その他」の２通りあることを説明した。\nPayPayへのポイント移行方法を教えた。", "device": "Android Docomo F-42A", "cats": ["ポイント", "QRコード"]}, {"id": 0, "q": "機種変更後、\n歩数カウントが少ない", "a": "歩数設定は標準に設定されていたが\nバッテリーは最適化となっていたので最適化しないに設定、再起動を実施。", "device": "Android Galaxy A25 5G", "cats": ["歩数", "機種変更"]}, {"id": 0, "q": "・歩数が増えていかない\n・以前、いきいき課の方にバッテリの「最適化しない」、「高感度」に設定してもらったが、改善されていない\n・アプリを起動してから、歩いてもカウントされないことが多い\n・特に階段のときに増えていかない", "a": "・「脳にいいアプリ」　4,592歩　　「スマホの歩数計」　5,910歩\n・バッテリの「最適化しない」と「高感度」の設定になっていることを確認。\n・遠山様に相談：やはり機種によって、「バッテリの最適化しない」、アプリのバッテリの最適化しないと高感度に設定しても、歩数カウントが増えない機種があるとのことでした。歩き始めのときに「脳にいいアプリ」を起動して、カウントされているかどうかを確認してから歩いていただくようにお願いした。（前からそのようにしているが、歩数が増えないとのことでした。）", "device": "Android Y!mobile A401FC", "cats": ["歩数"]}, {"id": 0, "q": "歩数カウントが倍近く少ない", "a": "歩数設定は標準、バッテリーは最適化しないに設定されていた。\nそこで、歩数設定を高感度に設定し再起動して様子見とした。", "device": "Android Aquos wish4", "cats": ["歩数"]}, {"id": 0, "q": "ボランティアの「QRコード」を登録している団体を知りたい", "a": "市役所の福祉部高齢者いきいき課を紹介しました。", "device": "Android", "cats": ["新規登録", "QRコード"]}, {"id": 0, "q": "・スライドパズルのやり方がわからない\n・脳力図のそれぞれの意味を知りたい", "a": "・タブレットにて、「スライドパズル攻略の基本知識」の動画を見ながら、説明した。\n・脳力図の各項目を説明した。\n・ポイントの獲得に関して、小冊子を見ながら説明した。\n・バッテリの「最適化しない」及び「標準」の設定後、再起動を実施。", "device": "Android シニア", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "歩数カウントが少ない", "a": "歩数設定は標準に設定されていたが\nバッテリーは最適化となっていたので最適化しないに設定、再起動を実施。", "device": "Android Xperia so-41B", "cats": ["歩数"]}, {"id": 0, "q": "脳トレ全般教えて欲しい", "a": "脳トレを実行しながら説明を実施。\nスライドパネルについては揃え方冊子にて解き方を説明。", "device": "Android Galaxy Pixel3a", "cats": ["脳トレ"]}, {"id": 0, "q": "・歩数が増えていかない\n・振動を与えると動き出すが、他の歩数計と歩数が異なる\n「脳にいいアプリ」　1,175歩、「歩数計アプリ」　2,587歩　かなり差が出ている", "a": "・バッテリの「最適化しない」と「高感度」に設定し、再起動実施。\n・再起動後、ご自分で歩いて、歩数が増えていることを確認した。", "device": "Android AQUOS WISH４", "cats": ["歩数"]}, {"id": 0, "q": "朝一起動時の\n\"おはようメッセージ\"が出ない", "a": "携帯の再起動を行うことで改善。\n再起動方法を教示。", "device": "Android Galaxy Pixel8a", "cats": ["その他"]}, {"id": 0, "q": "脳トレ/パズルの解き方", "a": "スライドパネルの揃え方冊子と動画を見てもらい説明。", "device": "nan", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "・スマホを新しく購入、ユーザーIDが分かっているので、再インストールして欲しい", "a": "・データ引継ぎのインストールを行い、確実にポイントが移行されたことを確認した。\n・バッテリの「最適化しない」と「標準」に設定後、再起動を実施。", "device": "Android", "cats": ["新規登録", "ID・ログイン"]}, {"id": 0, "q": "・スマホを新しく購入、ユーザーIDが分かっていないが、再インストールして欲しい", "a": "・、氏名、生年月日、町名を聞き、遠山様に連絡してユーザーIDを調査していただいた。\n・ユーザーIDが判明したので、アプリの再インストールとデータの引継ぎを行った。\n・「脳にいいアプリ」の「バッテリの制限なし」と、「標準」に設定し、再起動を実施。", "device": "Android シニア", "cats": ["新規登録", "ID・ログイン"]}, {"id": 0, "q": "機種変更", "a": "脳にいいアプリを再インストールし、データの引継ぎを実施。その後、歩数設定を標準に、バッテリー設定を制限なしにそれぞれ設定し、再起動を実施。", "device": "Android Galaxy A25 5G", "cats": ["機種変更"]}, {"id": 0, "q": "・スライドパズルのやり方がわからない\n・間違い探しがわからない", "a": "・スライドパズルの動画をタブレットで見ながら説明を行った。\n　特に注意点を教えながら、説明を行った。\n・間違い探しについては、正しい絵柄を見るところを何回かタップして、どこが動いているか、色など変化するところがないかを良く見ていると探すことができることを説明した。", "device": "Android シニア向け", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "機種変更", "a": "ID不明のため遠山様に問合わせ、\n脳にいいアプリを再インストールし、データの引継ぎを実施。その後、歩数設定を標準に、バッテリー設定を制限なしにそれぞれ設定し、再起動を実施。", "device": "Android arrows F-52E", "cats": ["機種変更"]}, {"id": 0, "q": "QRコード読取り画面に枠が出ない", "a": "右記理由により遠山様にIDを問合わせ、\n脳にいいアプリを再インストールし、データの引継ぎを実施。その後、歩数設定を標準に、バッテリー設定を制限なしにそれぞれ設定し、再起動を実施。", "device": "Android arrows FCG01", "cats": ["QRコード"]}, {"id": 0, "q": "・スライドパズルのやり方がわからない", "a": "・スライドパズルの動画をタブレットで見ながら説明を行った。\n　特に注意点を教えながら、説明を行った。\n・バッテリの「最適化しない」と「標準」になっているかどうか確認したが、すでに設定されていた。", "device": "Android 京セラBASIO", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "てくポを始めたい（新規）", "a": "「脳にいい」アプリをインストールして、マイナンバーカードで八王子市への申込を実施しました。\n「てくポまるわかりブック」で概要説明を実施しました。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "・QRコードが使えない", "a": "・テスト用のQRコードを読み込んだところ、正常に読み取れる状態になっていた。\n・バッテリの「最適化しない」と「標準」になっているかどうか確認したが、すでに設定されていた。", "device": "Android", "cats": ["QRコード"]}, {"id": 0, "q": "・健診のポイント付与をして欲しい\n・ポイントの増やし方を教えて欲しい", "a": "・健診結果票と身分証明書（健康保険証）を確認して、健診ポイントをQRコードを読み込み、30ｐを付与した。\n・何をすればポイントが増えるのかを説明した。\n・特に簡単健康管理の入力方法を入力してもらいながら、説明した。\n・「脳にいいアプリ」の更新がされていなかったので、アプリの更新を行った。\n・バッテリの「使用を制限しない」と「標準」にを確認した。すでに設定済みでしたが、一応「再起動」を行った。", "device": "Android 京セラBASIO", "cats": ["ポイント", "健診ポイント"]}, {"id": 0, "q": "朝一起動時に表示されるポイント数が反映されない", "a": "遠山様に確認し、それはスターポイントであると説明し納得いただいた。", "device": "Android Pixel7a", "cats": ["ポイント"]}, {"id": 0, "q": "てくポの申込処理", "a": "アプリはインストールされていたが、「八王子市」登録してから、運転免許証で「てくポ」の申込処理を行った。スマホの処理が遅く、最後の完了メッセージを確認できなかったが、再度申込処理をしたところ、「登録処理待ち」メッセージが表示されたので、OKと判断。", "device": "iPhoneSE", "cats": ["その他"]}, {"id": 0, "q": "スマホ初心の方でてくポ申込み", "a": "新規インストールを行い（マイナンバーカード）、バッテリーの設定と歩数設定を行い再起動して終了後、てくポの概要をご説明。", "device": "Android Galaxcy", "cats": ["その他"]}, {"id": 0, "q": "・まちみえについて\n\n\n\n・友人にてくポを勧めたい", "a": "・まちみえについて\n　近くの楽しい情報ボタンから対戦できる店を探していただき、そこで対戦して勝てばポイントが得られることを説明。対象の店については準備中と。\n・まるわかりブックで手順を説明。\n　やってみるとのこと。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "てくポ申込", "a": "携帯を再起動、メモリー、Chrome等確認したが、\nマインバーカードを読込むボタンを押したところで、\nアプリがダウン。", "device": "Android Pixel8", "cats": ["その他"]}, {"id": 0, "q": "ダウンロード処理について", "a": "よく聞いたところ、アプリインストール処理でダウンロードの処理指示が出るので、どうしたらいいか、との質問で、「てくポ」に関する相談ではなかったので、一般的な、ダウンロードで、気を付けることを教えて引き取ってもらった。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "「てくポ」申請登録で、プログラムが落ちる", "a": "相談者のトラブルを確認した。マイナンバーカードを撮るときに、アプリが終了して、スマホのHome画面に戻ってしまう。対応が分からず、遠山さんにTELしたが、結局対処できなかった。", "device": "Android pixel 7a", "cats": ["新規登録"]}, {"id": 0, "q": "QRコードを読むを押すと、「カメラの権限を許可してください」のメッセージがでる", "a": "・「位置情報の許可」設定を確認するが、「アプリの使用中のみ許可」となっていて、設定は問題なし\n・その他調べたが問題点が見当たらないので、電源OFF/ON操作を行うが、改善しない\n・なので、「脳にいいアプリ」の再インストールを行い、QRコードを正常に読めるようになったことを確認し、実際に行って頂いた", "device": "Android Galaxcy", "cats": ["QRコード"]}, {"id": 0, "q": "検診ポイント付与の依頼", "a": "健康診断と身分証明書を確認後、QRコードにてポイントを付与。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "てくポ申込\n（脳にいいアプリインストール済）", "a": "てくポ申込を実施\n歩数計設定を標準に設定、バッテリーを確認し再起動。その後、\n次項目のご主人と一緒にまるわかりブックに沿って説明", "device": "Android Pixel8a", "cats": ["新規登録"]}, {"id": 0, "q": "新規", "a": "脳にいいアプリをインストールしてくポ申込を実施\n歩数計設定を標準に設定、バッテリーを確認し再起動。その後、\n前項目の奥様と一緒にまるわかりブックに沿って説明", "device": "Android Pixel8a", "cats": ["新規登録"]}, {"id": 0, "q": "「能にいいアプリ」が立ち上がらない。\n歩数が一緒に歩いている友人の歩数の半分以下で少ない", "a": "・アプリが、立ち上がらないので、タスクを削除をしたところ立ち上がった。タスクを削除する方法を教えた。\n・歩数が少ないとのことだったので、「省電力」を「標準」にした。その後歩数の確認を行った。", "device": "Android", "cats": ["歩数", "不具合"]}, {"id": 0, "q": "①画面が真っ白で動かない\n②歩数が上がらない（他の歩数計1477歩、てくポ440歩）", "a": "①電源OFF/ONで復帰したので、そのやり方を説明し、ご自身で行って頂いた\n②「使用していないアプリを停止」をOFF、てくポ歩数計を高感度から標準に変更し、様子を見ていただくことにした", "device": "Android Arrows", "cats": ["歩数", "不具合"]}, {"id": 0, "q": "新規", "a": "脳にいいアプリのインストール、続いててくポ申込。\nまるわかりブックを用いてポイントの取得項目ならびにアプリ機能を説明。", "device": "iPhone12", "cats": ["新規登録"]}, {"id": 0, "q": "PayPayポイントへの移行依頼", "a": "画面を見ながら移行を実施。\nPayPay画面で移行ポイントを確認。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "「脳にいいアプリ」の更新メッセージが出る", "a": "新規インストールを行い（マイナンバーカード）、バッテリーの設定と歩数設定を行い再起動して終了後、てくポの概要をご説明。", "device": "Android OPPO", "cats": ["その他"]}, {"id": 0, "q": "朝方、てくポ申込をしたが、\nできているか不安で来訪", "a": "てくポ情報のところで、申込中となっていることを確認。", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "新規登録", "a": "一連の新規登録処理を行った。その後ポイントの付け方、ポイントの使い方、使えるお店の見方、QRコードの読み方などを教えた。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "てくポ申込\n（脳にいいアプリインストール済）", "a": "脳にいいアプリがインストールされていたが八王子市が登録されておらず、登録しようとするも登録できず。\n再インストールを実施するも八王子市の登録でタイムアウトが発生し登録できず。\n再々インストールをし何とか八王子市までの登録は完了。\nその後、てくポ申込をすべく八王子市メニューを押すも白画面となって遷移せず。\n時間も過ぎていたので、来訪者の方も気をつかっていただき、ここで断念した。", "device": "失念しました", "cats": ["新規登録"]}, {"id": 0, "q": "以前入れてもらったが、しばらく使っていないので、使い方の説明をご希望", "a": "時間の許す範囲でご説明。バッテリーの最適化をOFFにし、てくポ歩数計えを標準に変更し、電源OFF/ONし、実際に使用して頂いた。", "device": "Android", "cats": ["使い方"]}, {"id": 0, "q": "聞きたいことがあるとのことで来訪", "a": "質問に対する対応のみ\n・アプリ再インストール後てくポは引継げるか？\nなど", "device": "nan", "cats": ["その他"]}, {"id": 0, "q": "歩数計の誤動作", "a": "①歩数計設定状況確認　省エネ->標準に設定変更　②自動エコモード起動オン-＞Oオフ　③再起動", "device": "Android arrows F52B", "cats": ["歩数"]}, {"id": 0, "q": "・新規でてくポを使いたい", "a": "・「脳にいいアプリ」のインストールとマイナンバーカードより八王子市へ申込みを行う。\n・アプリについて一通り説明、脳トレについて詳細説明。\n・バッテリの「最適化しない」と「標準」に設定し、再起動を実施。", "device": "Android シニア", "cats": ["新規登録"]}, {"id": 0, "q": "アプリ消失", "a": "脳にいいアプリをインストール\nIDを遠山様に問い合わせをして引継ぎ作業を実施。その後、\n歩数設定：標準\nバッテリー：制限しない\nを設定、再起動。", "device": "Android SHG09", "cats": ["アプリ消失"]}, {"id": 0, "q": "ニックネームを変えたい", "a": "①プロフィールからニックネームを変更\n②ニックネームが変更されていることを確認", "device": "Android Pixel8a", "cats": ["その他"]}, {"id": 0, "q": "てくポ申請", "a": "てくポ申込を実施。その後、\n歩数設定：標準\nバッテリー：制限しない\nを設定、再起動。\nまるわかりブックに沿って説明。", "device": "Android Galaxy A25 5G", "cats": ["その他"]}, {"id": 0, "q": "脳アプリが消失", "a": "①再インストール実施　②データ引継ぎ　③歩数計設定を標準、バッテリーセイバーオフを確認　④再起動", "device": "Android Pixel8", "cats": ["アプリ消失"]}, {"id": 0, "q": "検診のポイント追加のご依頼", "a": "健康診断と身分証明書を確認後、QRコードにてポイントを付与", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "・新規でてくポを使いたい\n・「脳にいいアプリ」は自分でインストールし、八王子市への申込みを行った", "a": "・アプリについて一通り説明、脳トレについて詳細説明。\n・バッテリの「最適化しない」と「標準」に設定し、再起動を実施。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録（アプリインストール済み）", "a": "①メニューから申し込み～申し込み完了　②歩数計設定を標準、バッテリーセイバーオフ　　③再起動　④画面操作をしながら概況説明実施", "device": "Android AQUOS sense lite", "cats": ["新規登録"]}, {"id": 0, "q": "QRコードが読めない", "a": "脳にいいアプリのバージョン：最新を確認。次に\nブラウザをChromeに設定\nテスト用QRコードを読込み、所定の結果となった。\nこれで問題無い旨説明。", "device": "Android KYV47", "cats": ["QRコード"]}, {"id": 0, "q": "ポイントが思ったほどに付かない", "a": "以下を確認し設定し再起動。\n歩数設定：標準\nバッテリー：制限しない\nポイントについては事象として起こるのか問い合わせするとして、終了した。", "device": "Android Pxel 7a", "cats": ["ポイント"]}, {"id": 0, "q": "新規登録（アプリインストール済み）", "a": "①メニューから申し込み～申し込み完了　②バッテリーセイバーオフ　　③再起動　④画面操作をしながら概況説明実施", "device": "iPhoneXr", "cats": ["新規登録"]}, {"id": 0, "q": "・新規でてくポを使いたい", "a": "・「脳にいいアプリ」のインストールとマイナンバーカードより八王子市へ申込みを行う。\n・アプリについて一通り説明、脳トレについて詳細説明。\n・バッテリの「制限しない」と「標準」に設定し、再起動を実施。", "device": "Android arrows", "cats": ["新規登録"]}, {"id": 0, "q": "①たまにアプリ立ち上げ後画面が真っ白になる　②歩数計がたまに誤動作　③ポイントの利用の仕方", "a": "①スマホの再起動を依頼　②歩数計設定、バッテリーセイバーの状況を確認するも設定はOK。誤動作は通信状況など外部要因によることを説明し了承。　③登録された店舗やPapayポイント交換できることを説明、店舗で利用する場合はてくぽのアプリで当該店舗のQRコードを読むことで精算できることを説明。", "device": "Android POCO", "cats": ["歩数", "ポイント", "不具合"]}, {"id": 0, "q": "歩数問題で来訪されたが、アプリ異常が起こったときに再インストールをされたが、てくポ申込されていない状況。", "a": "遠山様にIDを問い合わせし引継ぎ作業を実施し、アプリ異常時の状態に復元。\nその後、\n歩数設定：標準\nバッテリー：制限しない\nを設定、再起動。", "device": "Android A001SH", "cats": ["新規登録", "歩数"]}, {"id": 0, "q": "・機種を変更したが、再度登録してしまった。ポイントが増えていかない。", "a": "・「脳にいいアプリ」のアンインストール実施。\n・氏名、住所、生年月日、ニックネームを聞き、遠山様に電話し、過去のユーザーIDの調査をお願いした。\n・ユーザーIDが判明し、アプリを再インストールして、途中のデータ引継ぎを行った。\n・アプリについて一通り説明、脳トレについて詳細説明。\n・バッテリの「制限しない」と「高感度」に設定し、再起動を実施。", "device": "Android arrows", "cats": ["新規登録", "ポイント"]}, {"id": 0, "q": "新規登録", "a": "①アップストアからアプリのインストールする際、AppleIDのサインインが必須であるがパスワードが不明、パスワードを忘れた場合の手順を試みるが新デバイス保護がオンとなっており上手く行かず、結局今回の新規登録はご了解を頂き断念。パスワードを確認後再度お越し頂くこととした。", "device": "iPhone16e", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録", "a": "脳にいいアプり起動時Debugモード表示で画面停止。Debugモードを解除しアプリ起動->てくポ申込を実施。\n歩数設定：標準\nバッテリー：制限しない\nを設定、再起動。\nまるわかりブックに沿って説明。", "device": "Android KYV47", "cats": ["新規登録"]}, {"id": 0, "q": "・歩数が増えていかない\n増えるときもあるが、全く増えない時もある", "a": "・バッテリの設定を「制限なし」と「高感度」に設定し、再起動実施。\n・設定を確認して、バッテリの「高感度」と「制限なし」に設定し、再起動実施。", "device": "Android Docomo F-53E", "cats": ["歩数"]}, {"id": 0, "q": "機種変更", "a": "①再インストール実施　②データ引継ぎ実施したがIDと生年月日が不一致。　③ベスペラにID確認を依頼　　④生年月日、名前からIDを特定。⑤特定されたIDを使いデータ引継ぎ完了　⑤歩数計設定を標準、バッテリーセイバーオフを確認　⑥再起動", "device": "Android Redmi note 13", "cats": ["機種変更"]}, {"id": 0, "q": "脳トレ", "a": "スマホにスライドパネルのYouTubeを登録し勉強していただくことに。\nまた、以下を設定し再起動。\n歩数設定：省電力->標準\nバッテリー：制限しない", "device": "Android Basio Active2", "cats": ["脳トレ"]}, {"id": 0, "q": "・脳トレのスライドパズルがよくわからない。\n・歩数が増えていかない", "a": "・脳トレについて、全般的に説明した。\n・バッテリの設定を「制限しない」と「高感度」に変更し、再起動実施。\n・ユーザーIDの確認を忘れてしまいました。", "device": "Android Pixel 7a", "cats": ["歩数", "スライドパズル", "脳トレ"]}, {"id": 0, "q": "新規登録", "a": "①アプリインストール　②メニューから申し込み～申し込み完了　②歩数計設定を標準、バッテリーセイバーオフ　　③再起動　④画面操作をしながら概況説明実施", "device": "Android arrows F51B", "cats": ["新規登録"]}, {"id": 0, "q": "歩数が合わない\n脳にいいアプリの歩数440歩\nスマホの歩数計表示　1,084step\n12/1南口で機種変更後「脳にいいアプリ」を再インストールしています。", "a": "設定の確認\n脳にいいアプリの歩数計設定　感度「高感度」から「標準」、歩行ペース「OFF」から「ON」に設定。\n自動調整バッテリーの使用「ON」から「OFF」に設定。\n使用していないアプリを管理する「ON」から「OFF」に設定。\nバックグラウンドでの使用を許可「ON」で「制限なし」になっていました\n再起動を実施しました。", "device": "Android Arrows F-52E", "cats": ["新規登録", "歩数", "機種変更"]}, {"id": 0, "q": "画面が真っ白になる", "a": "スマホの電源Off/Onにて回復し、使って頂くことにしたが、ご自宅でも同現象が出るとのことで、お話をお聞きしたが原因不明。これで様子を見ていただくことにした。", "device": "Android", "cats": ["不具合"]}, {"id": 0, "q": "八王子市のシニア向けスマホ購入支援に関して教えてほしい。", "a": "「てくポ」の相談用件でないため、理由をご説明し、aU向けの相談ショップを教えて相談を終了した。", "device": "－", "cats": ["その他"]}, {"id": 0, "q": "アプリの動きが良くない", "a": "バックグラウンドで動いていた多くのアプリをすべて終了させ、加えて、端末の再起動を行って、脳にいいアプリを起動させて見たところ、比較的動作も正常化した。　とりあえず、様子を見ていただくことで相談終了。", "device": "iPhone", "cats": ["その他"]}, {"id": 0, "q": "てくポ　ポイントの申し込み", "a": "マイナンバー　カードで八王子市の登録実施、再起動。てくポの概要をご説明。", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "「てくポ」を解約したい。\n脳トレは苦手なのでストレスになる。\n娘に解約をしてもらったが、１か月ぐらいしてもお知らせが来る", "a": "ベスプラの遠山様に、IDを伝えて、解約がされているかを確認していただいた。　結果、解約手続きは終了しており、アプリのアンインストールをすることで終了とした。", "device": "Android", "cats": ["脳トレ"]}, {"id": 0, "q": "新規にてくポを入れてほしい", "a": "新規インストールを行い、バッテリーの設定と歩数設定を行い再起動して終了。　てくポの概要をご説明。", "device": "Android galaxy SM-S931Z", "cats": ["新規登録"]}, {"id": 0, "q": "ショップで不要なアプリを削除した後\n脳にいいアプリのアイコンがホーム画面からダウンロードのエリアに移動したので\nホーム画面に戻してほしい。\nポイントの使い方を教えてほしい。\n長房ふれあいセンターでインストールされた方です。", "a": "脳にいいアプリのアイコンをホーム画面に移動しました。\nポイントの使えるお店の探し方と利用方法を説明しました。", "device": "Android らくらくホン F-53E", "cats": ["新規登録", "ポイント", "使い方"]}, {"id": 0, "q": "スライドパズルが難しい", "a": "スライドパズルの説明および「スライドパズルで実践する」の資料をお渡しし、ご自宅で練習して頂くようにお願いした", "device": "Android", "cats": ["スライドパズル"]}, {"id": 0, "q": "歩数が合わない\n脳にいいアプリの歩数900歩\n万歩計を体のつけていますが、今日は自宅に置いてきました。\nスマホをかばんに入れて歩いています。\nスマホの設定を確認してほしい", "a": "脳にいいアプリの歩数計設定　感度は「標準」になっていました。\n長エネスイッチは「OFF」になっていました。\nバッテリーマネージャの使用「ON」から「OFF」に変更しました。\n使用していないアプリを管理する「ON」から「OFF」に変更しました。\nバックグラウンドでの使用を許可「ON」で「制限なし」になっていました。\n再起動を実施しました。\nAQUOSの標準で入っている「からだメイト」を設定しましたので　脳にいいアプリの歩数とからだメイトの歩数を比べてください。", "device": "Android AQUOS ｗish5", "cats": ["歩数"]}, {"id": 0, "q": "アプリがスムーズに動かない", "a": "アプリの起動をした際、データ通信接続が出来ないというメッセージが出て停止する。　何度かトライしたが改善せず。\nデータ通信の設定は問題なし。\n端末を再起動して、脳にいいアプリを起動しても同様の現象でアプリがつながらなかった。　ポケットWiFiが使えない状況であったため、Wifi接続での試行も出来なかった。\n再インストール（引継ぎ）を試行する方向で提案したが、ご相談者が時間がないとのことで、再度ご相談に来ていただくことにしていただきご了解していただいた。", "device": "iPhone", "cats": ["不具合"]}, {"id": 0, "q": "歩数が他の歩数計に比べ少ない（148756歩が2612歩となる）", "a": "てくポ歩数計設定は標準を高感度に、バッテリーの使用状況最適化を制限無しに変更し、再起動", "device": "Android", "cats": ["歩数"]}, {"id": 0, "q": "機種変更したので\n脳にいいアプリを再登録してほしい", "a": "ﾕｰｻﾞIDを遠山様に問い合わせをし、\n再登録しました。\n脳にいいアプリの歩数計設定　感度「標準」\nバッテリー　「制限なし」\n再起動を実施しました。", "device": "Android KYG04", "cats": ["新規登録", "機種変更"]}, {"id": 0, "q": "歩数が上がらない", "a": "スマホの設定を確認したが、歩数設定やバッテリの最適化しない設定は正常であった。　また、スマホ内の他の歩数アプリもカウントアップしない状況であった。\nスマホを再起動して、歩数のカウントアップの状況を確認したところ、正常にカウントアップしたため、様子を見ていただくことで終了。", "device": "Android Kyocera A205KC", "cats": ["歩数"]}, {"id": 0, "q": "歩数が少ない（⑥の方とご夫婦同時相談）", "a": "てくポ歩数計設定は標準を高感度に、バッテリーの使用状況最適化を制限無しに変更し、再起動", "device": "Android", "cats": ["歩数"]}, {"id": 0, "q": "八王子市への申し込みを行ってほしい", "a": "インストール状況を確認したら、「市区町村」の欄が入力されていなかった。　「八王子市」の入力後に、八王子市への申し込み処理を行い、歩数設定とバッテリーの最適化しない設定後に再起動して終了。", "device": "Android BASIO Active２", "cats": ["その他"]}, {"id": 0, "q": "ポイントの使用方法を教えてほしい。\n歩数が合わない\nからだメイトの歩数4,617歩\n脳にいいアプリの歩数1,424歩", "a": "paypayポイントに交換するには、スマホにpaypayをインストールしてくださいとお伝えしました。\n脳にいいアプリの歩数計設定　感度「省電力」から「標準」に変更\n長エネスイッチは「OFF」になっていました。\nバッテリーマネージャの使用「ON」から「OFF」に変更しました。\n使用していないアプリを管理する「ON」から「OFF」に変更しました。\nバックグラウンドでの使用を許可「ON」で「制限なし」になっていました。\n再起動を実施しました。", "device": "Android AQUOS ｗish5", "cats": ["歩数", "ポイント", "使い方"]}, {"id": 0, "q": "歩数が少ない", "a": "てくポ歩数計設定は標準を高感度に、バッテリーの使用状況最適化を制限無しに変更、スマホ　バックグラウンドでの使用を許可し、再起動。", "device": "Android", "cats": ["歩数"]}, {"id": 0, "q": "脳にいいアプリを始めたい。\n新規インストール", "a": "脳にいいアプリのインストールと八王子市への申込を実施しました。\n脳にいいアプリの歩数計設定　感度「標準」\nアプリバッテリー使用量「制限なし」\n再起動を実施しました。", "device": "Android A302ZT", "cats": ["新規登録"]}, {"id": 0, "q": "誤って、アプリを消してしまった。", "a": "ベスプラの遠山様に、IDを確認していただく依頼をし、ID判明後に引継ぎ処理で再インストールを実施した。", "device": "Android Xperia SOG08", "cats": ["アプリ消失"]}, {"id": 0, "q": "新規にてくポを入れてほしい", "a": "新規に脳にいいアプリをインストールし、歩数設定とバッテリーの最適化しない設定後に再起動して終了。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "スライドパズルができない", "a": "スライドパズルの説明および「スライドパズルで実践する」の資料をお渡しし、ご自宅で練習して頂くようにお願いした", "device": "Android", "cats": ["スライドパズル", "不具合"]}, {"id": 0, "q": "てくポ　ポイントの使い方", "a": "てくポ　ポイントを使えるお店の見方、お店でのQRコードの使い方をご説明", "device": "Android", "cats": ["ポイント", "使い方"]}, {"id": 0, "q": "脳トレが途中で動かなくなる", "a": "ご本人に操作していただいたが、状況としては、シニアスマホ特有のタップの強さが弱いのと、指先の乾燥が問題だと見受けられた。　現在より、強めで長めにタップしていただくようお願いしてトライしていただいたら、概ね操作は正常になった。\n念のために、端末の再起動も行いアプリの動きもリセットした。　歩数計とバッテリーの設定は正常。", "device": "かんたんスマホ F52B", "cats": ["脳トレ"]}, {"id": 0, "q": "脳トレの途中で画面が真っ白になったのでアプリをアンインストールした。\n再登録をしたい", "a": "ﾕｰｻﾞIDをお持ちになったので、\n再登録しました。\n脳にいいアプリの歩数計設定　感度「標準」\nバッテリー　「制限なし」\n再起動を実施しました。", "device": "Android Pixcel8a", "cats": ["新規登録", "脳トレ", "不具合"]}, {"id": 0, "q": "歩数が他の歩数計に比べ少ない（5800歩が1269歩）", "a": "てくポ歩数計設定は標準を高感度に、バッテリーセーバーをオフに、スマホ　バックグラウンドでの使用を許可にし、再起動。", "device": "Android", "cats": ["歩数"]}, {"id": 0, "q": "スライドパズルのやり方を教えてほしい。", "a": "YouTubeの見方と卓上パズルで合わせ方法を実践しました。", "device": "iPhone 14plus", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "検診ポイントを付与してほしい", "a": "健診結果と本人身分証を確認してポイントを付与した。\nアプリの立ち上がりが遅い感じであったため、念のため、端末の再起動をしていただいた。", "device": "iPhone", "cats": ["ポイント"]}, {"id": 0, "q": "新規にてくポを入れてほしい", "a": "新規の脳にいいアプリをインストールし、歩数とバッテリーの最適化しない設定を行い終了。\nご本人が入力がスムーズにできる方であり、短時間で対応できた。", "device": "Android pixel ８", "cats": ["新規登録"]}, {"id": 0, "q": "検診ポイントを付与してほしい", "a": "健診結果と本人身分証を確認してポイントを付与した。", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "スマホがフリーズしたのでショップで復旧処理をしました。\n脳にいいアプリを再インストールしてほしい", "a": "ﾕｰｻﾞIDを遠山様に問い合わせをし、\n再登録しました。\n歩数は気にしないとの事でした。\n再起動を実施しました。", "device": "Android AQUOS Sense6s", "cats": ["新規登録", "アプリ消失"]}, {"id": 0, "q": "ボランティアを行っていて、てくポを入れるように勧められた。", "a": "新規インストールを行い、バッテリーの設定と歩数設定を行い再起動して終了。てくポの概要をごく簡単にご説明。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "携帯を変更したので、新しいスマホでも出来るようにしてほしい", "a": "ご本人は、「引継ぎ」の概念をお持ちでなく、２台目のスマホでもてくポができることを希望されたが、「引継ぎ」の対応をご説明して理解いただいたので、新端末に引継ぎでのインストールを実施した。　旧スマホのアプリは削除した。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "ご自分でインストールを行い八王子市へ「てくポ申込」を行うと　画面が真っ白のままになり、立ち上がらない。\nポイントの使い方を知りたい。", "a": "タスクをすべて終了後、脳にいいアプリが立ち上がりました。\n八王子市へ「てくポ申込」を行い、再起動を実施しました。\nポイントの使い方を説明しました", "device": "Android BASIO Active2", "cats": ["新規登録", "ポイント", "不具合", "使い方"]}, {"id": 0, "q": "・１週間ほど前に使っていた「脳にいいアプリ」が消えてしまった", "a": "・ご本人の氏名、町名、生年月日をお聞きして、遠山様へユーザーIDの問合せを行った。ニックネームをお聞きしたが忘れたとのことでした。\n・「脳にいいアプリ」をインストールし、データの引継ぎの処理を行い、アプリの再インストールしました。\n・ポイントの使い方の説明、PayPay、食事の内容などの説明を行った。\n・バッテリの「制限なし」と「標準」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明。", "device": "Android AQUOS wish2", "cats": ["アプリ消失"]}, {"id": 0, "q": "歩数計の不具合", "a": "①アプリ歩数計の設定を確認OK　②位置情報を許可に設定　③バッテリー使用量を無制限に設定　④再起動", "device": "Android AQUOS wish4", "cats": ["歩数", "不具合"]}, {"id": 0, "q": "八王子市へ「てくポ申込」をしたい。", "a": "てくポ申込を実施しました。\n歩数計設定を標準に設定、\n電池の最適化：最適化しないに設定\n長エネスイッチ：OFFを確認\n自動調整バッテリーの使用：OFFを確認\n再起動を実施しました。その後、\nまるわかりブックに沿って説明しました", "device": "Android AQUOS SH-01L", "cats": ["その他"]}, {"id": 0, "q": "・ときどき画面が真っ白になり、動かないときがある\n・歩数が増えていかない", "a": "・アプリの更新があるかを確認し、更新はないことを確認\n・Chromeのデフォルト設定を確認、OK。\n・スマホの再起動を実施。\n・バッテリの「制限なし」と「標準（高感度になっていたが）」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明。\n・「高齢者の権利擁護に関する研修」が、てくポのお知らせで来たが、申込みができないので、研修の申込みを行い、案内がされた後のやり方を説明した。", "device": "Android Motorola edge 50s pro", "cats": ["歩数", "不具合"]}, {"id": 0, "q": "①「近くの楽しい情報」をタップすると位置情報が無効と表示される　②説明用パズルのQRコードが読めない", "a": "①位置情報を許可に設定、再起動　②カメラを起動し、当該QRコードにかざし、表示されるURLをタップすることをお伝えし、自裁に説明用動画が見れることを確認、", "device": "Android F-51B", "cats": ["スライドパズル", "QRコード"]}, {"id": 0, "q": "新規登録をしたい。", "a": "脳にいいアプリをインストールし、\n「てくポ申込」を実施しました。\n歩数計設定を標準に設定、\nバッテリーバックグラウンドの使用制限：制限なしに設定\n省電力モード：OFFに設定\n再起動を実施しました。その後、\nまるわかりブックに沿って説明しました。", "device": "Android Galaxy A25 5G", "cats": ["新規登録"]}, {"id": 0, "q": "・ポイントの貯め方を教えて欲しい\n・歩数が増えていかない", "a": "・「てくポまるわかりブック」を見ながら、ポイントの貯め方について全般的に説明\n・また、アプリについて一通り説明。\n・バッテリの「制限しない」と「標準」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明", "device": "Android シニア F53E", "cats": ["歩数", "ポイント"]}, {"id": 0, "q": "新機能が動かない", "a": "現在、新サービスは準備中で来年1月以降運用開始とお伝えした。", "device": "Android AQUOS", "cats": ["不具合"]}, {"id": 0, "q": "ポイントが増えない（未申込）", "a": "①市への申し込み手続き実施　②位置情報の設定　③再起動", "device": "IOS iPhone SE", "cats": ["ポイント"]}, {"id": 0, "q": "検診ポイント付与の依頼。", "a": "健康診断書が昨年度分のため、今年度の健康診断を受診後に来訪して頂くことをお願いしました。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "アプリの使い方を教えてほしい。", "a": "まるわかりブックに沿って説明しました。", "device": "Android Pixel 10", "cats": ["使い方"]}, {"id": 0, "q": "・ポイントが無くなった。", "a": "・ご本人の氏名、町名、ニックネーム、生年月日をお聞きして、遠山様へユーザーIDの問合せを行った。\n・「脳にいいアプリ」をインストールし、データの引継ぎの処理を行い、アプリの再インストールしました。\n・バッテリの「制限なし」と「標準」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明。", "device": "Android シニア", "cats": ["ポイント"]}, {"id": 0, "q": "スライドパズルの移動ができない", "a": "グレーの桝に向かって隣の桝を動かす様にアドバイスした。（本人はグレーの桝をタップしていたため）", "device": "Android AQUOS", "cats": ["スライドパズル", "不具合"]}, {"id": 0, "q": "検診ポイント付与の依頼。", "a": "健康診断と身分証明書を確認後、QRコードにてポイントを付与しました。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "申し込み手続きがしたい", "a": "新規と思われたがアプリはインストール済み、既に市に承認済みでしたので、てくぽの概要・操作説明実施", "device": "Android AQUOS", "cats": ["その他"]}, {"id": 0, "q": "検診ポイント付与の依頼。", "a": "健康診断と身分証明書を確認後、QRコードにてポイントを付与しました。", "device": "nan", "cats": ["ポイント"]}, {"id": 0, "q": "・アプリをインストールしたが、ポイントが付かない", "a": "・八王子市への申込みがされていなかったので、マイナンバーカードにより、申込みを行った。\n・バッテリの設定を「最適化しない」と「標準」に設定し、再起動実施。\n・・ユーザーIDについて忘れないように説明。", "device": "Android AQUOS wish", "cats": ["新規登録", "ポイント"]}, {"id": 0, "q": "スライドパズルが上手く出来ない", "a": "スライドパズルのこつ、ルールを口頭で説明し理解頂いた、説明用の動画を勧めるも拒否。", "device": "Android", "cats": ["スライドパズル"]}, {"id": 0, "q": "・「脳にいいアプリ」を使っている途中で削除してしまった　再インストールをお願いしたい\n・ポイントの確認方法、使い方を教えて欲しい", "a": "・ご本人に、ユーザーIDを覚えているのか聞いたところ、メモされていたので、アプリを再インストールして、データの引継ぎを実施した。\n・付与されたポイントを確認する方法を教えた\n・ポイントの使い方を説明した、また食事の内容などを説明した\n・バッテリの設定を「標準」、「最適化しない」に設定し、再起動を実施。\n・ユーザーIDについて忘れないように説明。", "device": "Android arrows F02L", "cats": ["新規登録", "ポイント", "使い方"]}, {"id": 0, "q": "・脳にいいアプリの位置情報権限設定が出来ていないと表示されるが、設定方法が分からない\n・スライドパズルが難しい", "a": "・脳にいいアプリのアプリ情報を開き、「位置情報の利用」が「しない」設定になっていたのを「常に」に変更。\n・「スライドパズルアシスト」をインストールして練習していただくようにした。", "device": "iPhone", "cats": ["スライドパズル", "使い方"]}, {"id": 0, "q": "・本人（ご主人）から検診ポイントを付与してほしいとの依頼があり、代理で来場した", "a": "・ご家族であることの証明であるものを提示していただきたいとお願いしたが、身分証明等は持参していないとのこと。　また、持って来られた健康診断結果が、令和６年のものであったため、改めて必要書類を持参していただくことにした。（ポイント付与はしなかった）", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "・ときどき画面が真っ白になり、動かない\n・歩数が増えていかない\n・脳トレの間違い探しとスライドパズルがわからないので教えてほしい\nときがある　また、動きが遅いときがある\n・ポイントの使い方を知りたい", "a": "・画面が真っ白になったり、動かない状態になった場合は、ネットワークの問題や、データの取込みがあり、遅くなる場合があることを説明、このような状態になったときは、スマホの再起動を行うように勧めた\n・バッテリ設定を確認、「高感度」になっていたこと、バッテリの最適化しないの設定になっていたことを確認し、再起動を実施\n・歩数はちょっと歩いてもらい「1362歩」から「1403歩」と増えた\n・脳トレの間違い探しは、「正しい絵柄を見る」と「間違いを探す」を何回かタップして、どこが動いているか、変化はないかどうかを確認しながら探すようにアドバイスを行った。\n・スライドパズルは、「スライドパズル基本知識」の動画をインストールして説明、「スライドアシスト」をインストールし、ホーム画面に追加していつでも練習ができるように行った。\n・ユーザーIDについて忘れないように説明。", "device": "Android LIBERO A302ZT", "cats": ["歩数", "ポイント", "スライドパズル", "脳トレ", "不具合", "使い方"]}, {"id": 0, "q": "・歩数が増えていかない\n・脳トレの間違い探しとスライドパズルがわからないので教えてほしい\n・ときどき画面が真っ白になり、動かないときがある　また、動きが遅いときがある\n・ポイントの使い方を知りたい", "a": "・画面が真っ白になったり、動かない状態になった場合は、ネットワークの問題や、データの取込みがあり、遅くなる場合があることを説明、このような状態になったときは、スマホの再起動を行うように勧めた\n・バッテリ設定を確認、「標準」になっていたこと、バッテリの最適化しないの設定になっていたことを確認し、再起動を実施\n・歩数はちょっと歩いてもらい「4135歩」から「4182歩」と増えた\n・脳トレの間違い探しは、「正しい絵柄を見る」と「間違いを探す」を何回かタップして、どこが動いているか、変化はないかどうかを確認しながら探すようにアドバイスを行った。\n・スライドパズルは、「スライドパズル基本知識」の動画をインストールして説明、「スライドアシスト」をインストールし、ホーム画面に追加していつでも練習ができるように行った。\n・ユーザーIDについて忘れないように説明。", "device": "Android LIBERO A302ZT", "cats": ["歩数", "ポイント", "スライドパズル", "脳トレ", "不具合", "使い方"]}, {"id": 0, "q": "幾つかの質問あり", "a": "質問されたことに答えていると、途中で別の質問が出てくる。戻して説明するが、また途中で他の質問をされることが続き要領を得ませんでした。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "「おしらせ」にスターが何に使えるかの記載があったので、使えるメニューがどこに書いてあるかを知りたい", "a": "お知らせ「新機能　週間健康レポート」に「スターの使用」に関しての記述があり、使い方のメニューが複数あると思い込みされていた。　現時点、認知症検査のみしか「使い方」のメニューがないことをご説明し、ご理解いただいた。", "device": "Android", "cats": ["スター"]}, {"id": 0, "q": "スマホを換えたので、てくポを新ためてインストールしてほしい", "a": "・ヒヤリングした結果、前のスマホに脳にいいアプリを自身でインストールし、八王子市への申し込みはせず、脳トレだけを楽しんでおられていた。\n・したがって、新規の扱いとしてインストールと八王子市への申し込みを行い、歩数設定、バッテリー設定を行い再起動して終了。", "device": "Android OPPO", "cats": ["新規登録"]}, {"id": 0, "q": "歩数が友人に比べ少ない", "a": "てくポ歩数計設定　感度を標準、アプリのバックグラウンド使用を許可し、自動調整バッテリーをOFFにし、スマホの再起動。その後歩いていただき、歩数カウントの確認した", "device": "Android Arrows", "cats": ["歩数"]}, {"id": 0, "q": "・スライドパズルと、まちがい探しが難しい。", "a": "・「スライドパズル攻略の基本知識」の動画を見たことがあるとの申告であっため、「スライドパズルアシスト」のアプリをインストールし練習をしていただきたいとお願いした。\n・「まちがい探し」のコツは、正誤の画面を交互に見ることであると説明したが、そのことは分かっておられた。　引き続き、実践で訓練いただくようお願いした。", "device": "iphone", "cats": ["スライドパズル", "脳トレ"]}, {"id": 0, "q": "スマホ初心の方でてくポ申込み", "a": "新規インストールを行い（マイナンバーカード）、歩数設定「標準」を行い再起動して終了後、てくポの概要をご説明。", "device": "iphone", "cats": ["その他"]}, {"id": 0, "q": "スマホを換えたので、アプリを入れてほしい。　娘さんにやってもらおうとしたが、よくわからないとのことで途中でやめた。", "a": "・インストールが途中まで行われていたが、引継ぎ処理前であったため、持参されたユーザIDメモをもとに引継ぎ処理を実施した。　特に問題なく処理が出来て、歩数設定とバッテリー設定を行い再起動して終了。", "device": "Android Aquos sence 10", "cats": ["その他"]}, {"id": 0, "q": "・てくポを使いたい", "a": "・「脳にいいアプリ」をインストール、マイナンバーカードにて八王子市へ登録の申込みを行った。\n・バッテリ設定を、「標準」、バッテリの設定を「制限なし」及びバッテリセーバーを「制限なし」とし、再起動実施。\n・ユーザーIDについて忘れないように説明。\n・アプリの内容を全般的に説明を行った。", "device": "Android Redmi Note 9T", "cats": ["その他"]}, {"id": 0, "q": "・スマホを交換してアプリを入れたが、ポイントがもらえない。", "a": "・引継ぎ処理がされない状態でアプリをインストールされていた。ユーザIDを記録されており、再インストールして引継ぎ処理をして完了。　歩数設定とバッテリーの最適化しない設定市再起動。", "device": "かんたんスマホ Arrows FCG０２", "cats": ["ポイント"]}, {"id": 0, "q": "てくポを自身で入れようとしたが途中で、できなかった", "a": "新規インストールを行い（マイナンバーカード）、バッテリーの設定と歩数設定を行い再起動して終了後、てくポの概要をご説明。", "device": "Android Pixcel", "cats": ["その他"]}, {"id": 0, "q": "・スマホを交換してアプリを入れたが、ポイントがもらえない。", "a": "・引継ぎ処理がされない状態でアプリをインストールされていた。ユーザIDを記録されており、再インストールして引継ぎ処理をして完了。　歩数設定とバッテリーの最適化しない設定市再起動。", "device": "かんたんスマホ Arrows FCG０２", "cats": ["ポイント"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "脳にいいアプリを新規インストールし、歩数設定、バッテリーの最適化しない設定を行い、再起動して終了。", "device": "Android BASIO KYG04", "cats": ["新規登録"]}, {"id": 0, "q": "・歩数が少ない\n・脳トレの「スライドパズル」がわからない", "a": "・バッテリの設定を「最適化しない」と「高感度」に設定、バックグラウンドアクティビティの許可をOKに設定し、再起動実施。\n・スライドパズルは、「スライドパズル基本知識」の動画をインストールして説明、「スライドアシスト」をインストールし、ホーム画面に追加していつでも練習ができるように行った。\n・ユーザーIDについて忘れないように説明。", "device": "Android OPPO A35G", "cats": ["歩数", "スライドパズル", "脳トレ"]}, {"id": 0, "q": "①先週においでになった時の質問\n②てくポの使い方", "a": "①先週おいでの時に「これで安心、75才からの運転免許」1100円を郵送してくれるとのことだったが、届いていないとのことでしたが、この相談コーナーでは分からないと申し上げると、ご自身で高齢者生き生き課森田様に電話をされ、金曜日に郵送されたと言うことでした。\n②スマホもてくポも初心者の方でしたので、時間の許す限りご説明を行った。が、かなり基本的なことに不慣れですので、再度来場されるようお勧めしました", "device": "Android", "cats": ["使い方"]}, {"id": 0, "q": "脳にいいアプリを消してしまった。（無意識）\nアプリを再インストールしたが、昔のポイントが戻らない。", "a": "・旧ユーザIDを記録されていなかったため、ベスプラ社の遠山様に確認依頼。\n・旧IDをもとに再インストールして引継ぎ処理を実施。\n　最適化しない設定をして再起動して終了。", "device": "Android AQUOS sence 6", "cats": ["新規登録", "ポイント", "アプリ消失"]}, {"id": 0, "q": "機種変更をして　ショップで「脳にいいアプリ」インストールを実施したがポイントが移行されていない", "a": "ご本人の氏名、町名、生年月日、ニックネームを\nお聞きして、遠山様へユーザーIDの問合せ\n現在入っている「脳にいいアプリ」をアンインストールして、再度インストール\nユーザIDでデータの引継ぎの処理（ポイント復活）\nユーザーIDについて忘れないように説明\n時間がなく　歩数の設定はしていません", "device": "Android FCG02", "cats": ["新規登録", "ポイント", "機種変更"]}, {"id": 0, "q": "新規", "a": "脳にいいアプリのインストール、続いててくポ申込。\nまるわかりブックを用いてポイントの取得項目ならびにアプリ機能を説明。", "device": "Android arrows M07", "cats": ["新規登録"]}, {"id": 0, "q": "新規", "a": "「脳にいいアプリ」をインストール後、「てくポ」の申し込みを実施。「てくポ」の使い方を説明。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "下記問い合わせ\n①脳にいいアプリ/てくポの主旨\n②食事登録の主旨\n③ポイントの取得について", "a": "①ポイント獲得を励みに健康的な肉体、健康な脳を維持していただくことを説明。\n②認知症防止など健康的な脳を維持していただくための意識を持ってもらうことと説明。\n③まるわかりブックを用いて取得手段にどういうものがあるかを画面を見ながら説明。", "device": "iPhoneSE", "cats": ["新規登録", "ポイント"]}, {"id": 0, "q": "「てくポ」の申し込み\nポイントとスターについて\nスライドパズルについて", "a": "「てくポ」の申し込みを実施。スターはポイントとは別で、認知機能テストのチケットに交換できると説明。またポイントはPayPayに交換できることを説明。スライドパズルは「スライドパズル基本知識」映像と「スライドアシスト」を説明。「スライドアシスト」のアイコンをホーム画面に貼ろうとしましたが、「Find Hub 通知を許可しますか」へのリンクになってしまうので、遠山様に連絡。一部機種でその症状が出るとのことで、ブックマークに登録するようご指示を受け、実施しました。", "device": "Android pixel 10", "cats": ["ポイント", "スライドパズル", "スター"]}, {"id": 0, "q": "てくポ申込\n（脳にいいアプリインストール済）", "a": "てくポ申込を実施\n歩数計設定を標準に設定、バッテリーを確認し再起動。その後、\nまるわかりブックに沿って説明", "device": "Android Pixel8", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録", "a": "アプリのインストール\nメニューから申し込み～申し込み完了　ユーザーIDを忘れないように説明\nアプリ設定・歩数計設定・感度を省電力->「標準」\n本体設定・エコモード「OFF」のまま\n自動エコモード起動「OFF」のまま\n電池の最適化「しない」設定に変更\n再起動\nまるわかりブックで画面操作をしながら概要説明実施\n最後に実際に歩いて頂き歩数計がカウントされるのを確認", "device": "Android F01L かんたんスマホ", "cats": ["新規登録"]}, {"id": 0, "q": "歩数問題", "a": "歩数計設定を標準に設定、バッテリーを確認し再起動し様子をみていただくこととした。", "device": "Android Aquos wish4", "cats": ["歩数"]}, {"id": 0, "q": "スマホ本体の歩数計と合わない", "a": "本日の歩数はスマホ本体歩数計が2959歩、「脳にいいアプリ」は1912歩であった。試しに歩いてみたところ、スマホ本体歩数計と「脳にいいアプリ」は同じ歩数でした。最適化を制限なし、使用していないアプリの管理をOFFにして再起動。様子を見てもらい、歩数が合わない時は再度訪れていただくよう説明しました。", "device": "Android FCNT arrows FCG02", "cats": ["歩数"]}, {"id": 0, "q": "①歩数が少ない\n②脳トレ間違い探しのコツ", "a": "①設定を確認するもOKで、ゆっくり歩くとカウントが上がり難いので可能な限りしっかり歩いていただくことを依頼。\n②実際の間違い探しの問題画面で説明。", "device": "Android arrows FCG02", "cats": ["歩数", "脳トレ"]}, {"id": 0, "q": "機種変更したらポイントが０になった", "a": "旧スマホを持参だったので、WiFi接続後「脳にいいアプリ」を開いたところインストールの途中であった。旧スマホで「脳にいいアプリ」をアンインストール後インストールをしたその途中か、あるいはまだ申請していないかのどちらかと判断。当人は説明会でインストールと申し込みをし、その後は入れなおすようなことはしていない、またポイントも300ポイント位たまっていたとおっしゃっていました。遠山様にユーザーIDを調べていただいたところ、登録済みでした。アンインストール後にインストールをして引き継ぎ処理を行いました。アプリ内歩数計感度を標準、使用していないアプリの管理をOFF、バックグラウンドのアプリの許可をONにして再起動。", "device": "Android OPPO A5 5G", "cats": ["ポイント", "機種変更"]}, {"id": 0, "q": "新規登録", "a": "アプリのインストール\nメニューから申し込み～申し込み完了　ユーザーIDを忘れないように説明\nアプリ設定・歩数計設定・感度を省電力->「標準」\n本体設定・アプリ情報・アプリのバッテリー使用量「制限なし」に設定\nエコモード「OFF」のまま\n自動エコモード起動「OFF」のまま\n再起動\nまるわかりブックで画面操作をしながら概要説明実施\n最後に実際に歩いて頂き歩数計がカウントされるのを確認", "device": "Android A401FC らくらくホン", "cats": ["新規登録"]}, {"id": 0, "q": "アプリが消失", "a": "IDを控えて来られたが、それが間違っていたため遠山様に確認。\n脳にいいアプリをイ再ンストールし引継ぎ作業を実施。\n歩数計設定を標準に設定、バッテリーを確認し再起動。", "device": "Android Aquos wish4", "cats": ["アプリ消失"]}, {"id": 0, "q": "スマホを新規購入したが、スマホ本体歩数計、「脳にいいアプリ」共に歩数が少ししかカウントされない", "a": "既にベスプラ遠山様にお会いしているとのことでした。遠山様にご連絡したところ初期不良の疑いがあると伺いました。販売店では十分な対応を得られなかったので、FCNTの相談窓口に相談するよう説明をいただきました。遠山様からFCNTの相談窓口の電話番号を教えていただきお渡ししました。また、解決しない場合は、既に遠山様の名刺をお渡ししているので直接遠山様に連絡されるようお伝えしました。遠山様には本日もお世話になり、感謝しております。どうもありがとうございます。", "device": "Android FCNT arrows FCG02", "cats": ["新規登録", "歩数"]}, {"id": 0, "q": "開くと画面が真っ白になる", "a": "「脳にいいアプリ」のタスクを消去し、改めて開くことで解決しました。行列が出来ていましたがお待たせすることなく解決しました。", "device": "nan", "cats": ["不具合"]}, {"id": 0, "q": "QRコードが読めない", "a": "QRコードを読むを実施したところ、真っ白な画面に四角が表示されるだけでしたが、再起動したところ無事読み込めました。この症状は初めてということなので、てくポポイントと関係ないQRコードを読んだ可能性を考え、エラーが出た場合は、イベント主催者にこのQRコードはてくポポイントのQRコードか確認するようお伝えしました。", "device": "iPhone", "cats": ["QRコード"]}, {"id": 0, "q": "新規", "a": "脳にいいアプリのインストール、続いててくポ申込。\n歩数計設定を標準に設定、バッテリーを確認し再起動。\nまるわかりブックを用いてポイントの取得項目ならびにアプリ機能を説明。", "device": "Android Pixel8", "cats": ["新規登録"]}, {"id": 0, "q": "新規登録\n開発者モードになってインストールできない", "a": "開発者モードを検知したのでUSBデバッグをOFF\nアプリのインストール\nメニューから申し込み～申し込み完了　ユーザーIDを忘れないように説明\nアプリ設定・歩数計設定・感度を省電力->「標準」\n本体設定・アプリ情報・バッテリーセーバー「OFF」　自動調整バッテリーを「OFF」に設定\n電池の最適化「しない」に設定\n再起動\nまるわかりブックで画面操作をしながら概要説明実施\n最後に実際に歩いて頂き歩数計がカウントされるのを確認", "device": "Android KYV47", "cats": ["新規登録", "不具合"]}, {"id": 0, "q": "新規", "a": "「脳にいいアプリ」をインストール後、「てくポ」の申し込みを実施。最適化をOFF、使用していないアプリを管理をOFFに設定後、再起動。「てくポ」の使い方を説明。", "device": "Android pixel 9a", "cats": ["新規登録"]}, {"id": 0, "q": "①歩数がカウントアップしない\n②てくポ設定支援ガイドP.45noよくある質問１の画面はどうすれば良いか", "a": "①設定はOKであったので、再起動してもらったところ、カウントアップする様になった。\n②ホーム画面で上から下へスワイプすればということであったが、当該機種では歩数取得情報は出ず。", "device": "Android OPPO A35G", "cats": ["歩数"]}, {"id": 0, "q": "機種変更", "a": "旧スマホを持参だったので、WiFi接続後、ユーザーIDを確認。新スマホにインストールをして引き継ぎ処理を実施。最適化を制限なし、使用していないアプリの管理をOFF、バックグラウンドのアプリの許可をONにして再起動。", "device": "失念しました", "cats": ["機種変更"]}, {"id": 0, "q": "新規登録", "a": "アプリのインストール\nメニューから申し込み～申し込み完了　ユーザーIDを忘れないように説明\nアプリ設定・歩数計設定・感度を省電力->「標準」\n本体設定・アプリ情報・アプリのバッテリー使用量　「制限なし」に設定\nエコモード「OFF」のまま\n自動エコモード起動「ON」から「OFF」に変更\n再起動\nまるわかりブックで画面操作をしながら概要説明実施\n最後に実際に歩いて頂き歩数計がカウントされるのを確認", "device": "Android A401FC らくらくホン", "cats": ["新規登録"]}, {"id": 0, "q": "脳にいいアプリ起動時\n初期化失敗のダイアログが出る", "a": "再起動していただいて復帰", "device": "iPhoneSE", "cats": ["その他"]}, {"id": 0, "q": "古いので更新する必要があるとメッセージが出る\nQRコードの使用法", "a": "どの局面でメッセージが出るのか不明。詐欺メッセージの可能性があり操作で不具合を感じなければ放置し、またメッセージが出た場合はその画面を販売店に見せて、相談するよう告げました。\nQRコードの読み取り方を説明しました。", "device": "Android 京セラ 705KC", "cats": ["QRコード"]}, {"id": 0, "q": "①歩数が他アプリ(左右足跡のアイコン)と比べて5割近く少ない\n②脳トレ ３勝しても降格になるときがある", "a": "①何回か来られていて設定も問題ないが左記状況。歩き方、機種の違いなど雑談をして渋々納得された。\n②私はそんな経験は無いと説明したが、納得されず。", "device": "Android arrows A402FC", "cats": ["歩数", "脳トレ"]}, {"id": 0, "q": "「てくポ」の申し込み", "a": "「てくポ」の申し込みを実施。使用していないアプリの管理をOFF、バックグラウンドのアプリの許可をONにして再起動。", "device": "Android OPPO A79 5G", "cats": ["その他"]}, {"id": 0, "q": "以下、余白", "a": "以下、余白", "device": "以下、余白", "cats": ["その他"]}, {"id": 0, "q": "脳にいいアプリが消滅したので、アプリを再インストールしたい", "a": "Ｐlayストアから当該アプリを検索して表示されず。再起動するもアプリをインストール不可（デバイスが対応していない）。\nAndroidのバージョンが7.1.2と古く新規端末への買い替えをご提案し、ご理解を頂きました。", "device": "Android BASIO KYV43", "cats": ["新規登録"]}, {"id": 0, "q": "てくポ全般の質問\n　・歩数ランキングがでない\n　・ポイントの使い方がわからない\n　・スライドパズルが分からない", "a": "・本人の歩数が５８００歩程度であった。　「歩数」メニューの「歩数ランキング」（青色）のタイトルの下に自分のランキングが表示されると思われていた。　「歩数ランキング」をタップしないとランキング情報が表示されないことをご説明。\n・ポイントが使えるお店の見方をご説明。　「近くの楽しい情報」からも見ることが出来ることを補足。\n・スライドパズルアシストをインストールし、練習していただくことをおすすめした。　会場でのビデオ鑑賞もしていただいた。", "device": "Android Arrows F-51B", "cats": ["歩数", "ポイント", "スライドパズル", "使い方"]}, {"id": 0, "q": "設定して最初はよかったが、途中から歩数が少なくなった。歩数アプリの10%くらい。\n歩数アプリ：1089歩\n「てくポ」：　82歩", "a": "設定を「高感度」から「標準」にした。\n結果：歩いていただきほぼ同じ歩数になった。\n歩数アプリ：1278　＋189\n「てくポ」：261　　＋179", "device": "Android AQUOS", "cats": ["歩数", "アプリ消失"]}, {"id": 0, "q": "てくぽの使い方を知りたい", "a": "全体概要をご説明後、ご要望に基づき具体的に脳トレ・計算問題を何度か体験しました。また、ポイントの利用法や歩数計についてもご説明し、納得して頂きました。（86歳）", "device": "Android FCG02", "cats": ["使い方"]}, {"id": 0, "q": "新機能「週間健康レポート」の内容が分からない。何かする必要があるのか。", "a": "「週間健康レポート」のデータのとり方、活用方法について教えた。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "てくポの概要が知りたい。　登録は、後日ご詩人と一緒に登録するので、今日は登録はしない。", "a": "・パンフレットを使用して、てくポの概要説明を行った。　同行されていた方が、既にてくポを行われているため、不明点などあれば、ご相談していただくようにお願いした。", "device": "未確認", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を使いたい", "a": "「脳にいいアプリ」のインストールと一連の「てくポ」登録処理及び「てくポ」の説明を行った。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "・機種変更したので処理をしてほしい", "a": "・IDがメモとして残されていたため、問題なく引継ぎが実施できた。", "device": "Android A402ZT", "cats": ["機種変更"]}, {"id": 0, "q": "てくポの画面が出ない。アイコンをタップすると白画面のまま進まない。", "a": "スマホを再起動したところ、正常に起動するようになった。\nQRコードの読み方について教えた。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "新規登録", "a": "アプリをインストール、利用申し込み完了。\n概要説明後ホーム画面とテキストを見ながら操作説明を行いました。", "device": "iPhone12", "cats": ["新規登録"]}, {"id": 0, "q": "自分で脳にいいアプリのインストールは出来たが、八王子市への申し込みを行ってほしい", "a": "八王子市への申し込み処理を実施して完了", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を使いたい", "a": "「脳にいいアプリ」のインストールと一連の「てくポ」登録処理及び「てくポ」の説明を行った。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "「てくポ」を使いたい", "a": "「脳にいいアプリ」のインストールと一連の「てくポ」登録処理及び「てくポ」の説明を行った。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "歩数計問題\nてくぽの歩数カウントと歩数計アプリの歩数カウントの差違が大きい", "a": "歩数計設定を確認、省電力ー＞標準に設定変更\n再起動後、実際に歩いて頂き両者のカウント数を測ってもらいました。両者ともほぼ同じ結果でした。", "device": "Android OPPO A55G", "cats": ["歩数"]}, {"id": 0, "q": "新規でてくポを始めたい", "a": "脳にいいアプリの新規インストールを行い、併せて、スライドパズルアシストをインストールし、練習していただくようにお薦めした。", "device": "iPhone", "cats": ["新規登録"]}, {"id": 0, "q": "歩数が少ない、との問い合わせだったがスマホが起動しなかったのでその対応に時間を取られた。", "a": "「初期化に失敗しました」とのメッセージが出て先に進まない。モモバイルルータのWiFiに接続して実行したところ、メッセージが消えて処理が進んだ。\n歩数については、ドコモF-シリーズの歩数設定マニュアルに沿って対処。歩数のカウントは修正された。", "device": "Android F-42A らくらく", "cats": ["歩数"]}, {"id": 0, "q": "①歩数計問題\nてくぽの歩数カウントと歩数計アプリの歩数カウントの差違が大きい\n②ポイントの利用方法", "a": "①歩数計設定を確認、省電力ー＞標準に設定変更。再起動。\n②店舗での利用（ＱＲコードの読み取り）やPaypayポイントの交換方法についてご説明しました。", "device": "Android AQUOS", "cats": ["歩数", "ポイント", "使い方"]}, {"id": 0, "q": "充電している時にコンセントを抜いたら、ポイントが消えた。", "a": "アプリの状態を確認したら、八王子市への申し込みがされていない状態であった。　ご本人は、機種交換やアプリを消すことなどやっていないとの申告。\n登録されているIDと本人情報を確認し、遠山様に確認をしていただくと、IDが変わってしまっている状態が判明。\n状況をご説明したら、「もしかしたら家族が触ったかもしれない」と自信のないご説明があった。\n遠山様から返信いただいたIDをもとに、引継ぎ処理を行って回復した。", "device": "Android galaxy", "cats": ["ポイント", "アプリ消失"]}, {"id": 0, "q": "新規登録", "a": "アプリをインストール、利用申し込み完了。\n歩数計設定：省電力ー＞標準に設定変更、バッテリーモードを確認。再起動\n概要説明後ホーム画面とテキストを見ながら操作説明を行いました。", "device": "Android Xperia", "cats": ["新規登録"]}, {"id": 0, "q": "「てくポ」を使いたい", "a": "「脳にいいアプリ」のインストールと一連の「てくポ」登録処理及び「てくポ」の説明を行った。", "device": "Android", "cats": ["その他"]}, {"id": 0, "q": "機種変更したがポイントが貯まらない（データ引継ぎなし）", "a": "アプリを削除し、再度アプリをインストール。ユーザーＩＤが不明なため、遠山様にＩＤの特定を依頼。\nＩＤをもとにデータ引継ぎを行った。\n歩数計設定を省電力ー＞標準に設定、再起動", "device": "Android BASIO KYV04", "cats": ["ポイント", "機種変更"]}, {"id": 0, "q": "健診ポイントの付与をしてほしい", "a": "検診結果と本人確認証をチェックし、ポイントを付与。", "device": "Android", "cats": ["ポイント", "健診ポイント"]}, {"id": 0, "q": "脳トレで、Nバック課題がいくらやっても負けてしまう。　全部正解しても負ける。", "a": "脳トレは、回答スピード、正確さ、過去の成績によって評価されることをご説明。　全問正解でも負けることはあることをご理解いただいた。　確認したところ、番付は「大関」であった。", "device": "未確認", "cats": ["脳トレ"]}, {"id": 0, "q": "脳にいいアプリは入れたが、ボランティアを行っているので、ポイントが付くようにしてほしい。", "a": "八王子市への申し込み処理を行い、歩数及びバッテリーの設定を見直し、再起動で終了。\nボランティア会場等でのＱＲコードの読み方を補足説明した。", "device": "Android Xperia SOG08", "cats": ["ポイント"]}, {"id": 0, "q": "ポイントが付かない", "a": "「てくポ」の申込処理がされていなかったので、マイナカードで登録処理を行い、「てくポ」の説明を行った。", "device": "Android Allows", "cats": ["ポイント"]}, {"id": 0, "q": "脳にいいアプリが消滅したので、復活してほしい", "a": "アプリを削除し、再度アプリをインストール。ユーザーＩＤが不明なため、遠山様にＩＤの特定を依頼。\nＩＤをもとにデータ引継ぎを行った。", "device": "iPhone13", "cats": ["その他"]}, {"id": 0, "q": "かんたん健康管理の登録が出来ない", "a": "自身で操作をしていただきながら、登録をしていただいたが、問題なく当日の、体重、血圧、体温が入力できた。\nデータ登録処理の確認ステップを踏めていなかったものと推察。\n確認ボタンを確実に押しながら進めていただくように説明。", "device": "Android", "cats": ["新規登録"]}, {"id": 0, "q": "・東京公式アプリの相談とPayPayの相談でした。", "a": "・東京公式アプリとPayPayに関しては、こちらの相談窓口では受けられないことを丁寧に説明。\n・SJCのリーフレットを見せながら、スマホでお困りのことは、有料になるが個別に相談ができることを説明。", "device": "不明", "cats": ["その他"]}, {"id": 0, "q": "新規登録", "a": "アプリをインストール、利用申し込み完了。\n歩数計設定を「省電力」⇒「標準」設定。バッテリーセーバーoffを確認。再起動\n概要説明後ホーム画面とテキストを見ながら操作説明を行いました。\n※データ引継ぎのため「ユーザーID」をメモすることをアドバイス", "device": "Android arrows FCG02", "cats": ["新規登録"]}, {"id": 0, "q": "・歩数が少ない\n・ニックネームが本名なので変更したい", "a": "・歩数に関しては、歩数設定とバッテリーの使用量最適化をOFFに設定されていることを確認した。（最適化しない設定の表示が見つからず）\n・ニックネームはプロフィールの表示で変更", "device": "Android Samsung galaxy A25 50", "cats": ["歩数"]}, {"id": 0, "q": "・週間健康レポートについて、教えて欲しい", "a": "・週間健康レポートについて、内容について説明した。\n・「データがないのでレポートができない」という内容があったが、これは、「脳トレ」を全く行っていないためにレポートがされないことを説明\n・ご本人には、脳トレはできなくとも良いので、ぜひチャレンジしてくださいと伝えた。", "device": "不明", "cats": ["その他"]}, {"id": 0, "q": "・機種変更したので、新しいスマホにアプリを入れて欲しい", "a": "・古い機種を持ってきたので、Wifiに接続して、ユーザーIDを調べた。\n・新しいスマホにすでにアプリが入っていたので、アンインストールして、再度インストールした。\n・途中で、機種変更の手続きを行い、ポイントの移行が終了した。\n・Androidスマホだったので、歩数設定を「標準」に変更し、「バッテリの使用を制限なし」に変更し、再起動実施。", "device": "Android Galaxy A25", "cats": ["機種変更"]}, {"id": 0, "q": "・歩数の設定をして欲しい", "a": "・Androidスマホだったので、歩数設定を「標準」に変更し、「バッテリの使用を制限なし」に変更し、再起動実施。", "device": "Android Galaxy A25", "cats": ["歩数"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "・まるわかりブックのGooglePlay（QRコード）から脳にいいアプリをインストールしようとした際、Googleログインの要求があった。\nログインIDを確認したが、わからないとのことで、新規にアカウントを作成し、無事、脳にいいアプリをインストールし八王子市への申し込みを行った。\n歩数設定の見直し、バッテリー設定の変更と再起動で終了。", "device": "Android らくらくホン F-52B", "cats": ["新規登録"]}, {"id": 0, "q": "・機種変更したので、新しいスマホにアプリを入れて欲しい\n・スライドパズルが難しい", "a": "・ユーザーIDをメモされていたので、新しいスマホのアプリをアンインストールして再度インストール後、データの引継ぎの処理を行った。\n・歩数計設定「標準」に変更、「バッテリの使用を制限なし」に変更し、再起動実施。\n・「スライドパズル」が難しいと言われたので、「スライドパズル基本知識」の動画と、「スライドアシスト」をインストールし、ホーム画面に追加していつでも練習ができるように行い、内容を説明し終了。", "device": "Android arrows F52E", "cats": ["スライドパズル", "機種変更"]}, {"id": 0, "q": "てクポの「QRコードを読む」をタップ後カメラが直ぐに閉じて、QRコードを読めない", "a": "カメラの許可あり、再起動実施、正常に動作することを確認した。\n長時間電源を落としたことが無かったため、たまには電源オフや再起動することをアドバイス", "device": "iPhone12", "cats": ["QRコード"]}, {"id": 0, "q": "新規登録", "a": "アプリをインストール、利用申し込み完了。\n歩数計設定を「省電力」⇒「標準」設定。バッテリーセーバーoffを確認。再起動\n概要説明後ホーム画面とテキストを見ながら操作説明を行いました。\n※データ引継ぎのため「ユーザーID」をメモすることをアドバイス", "device": "Android A001KC", "cats": ["新規登録"]}, {"id": 0, "q": "・健診ポイントを付与して欲しい", "a": "・健診の結果表と運転免許証で、確認し、QRコードからポイントの付与手続きを行った。", "device": "Android", "cats": ["ポイント", "健診ポイント"]}, {"id": 0, "q": "・検診ポイントを付けてほしい\n・歩数が少ないことがあるので見てほしい", "a": "・検診結果と本人確認証を確認して付与\n・歩数設定の見直しと省電力管理から脳にいいアプリを保護対象から除外して再起動", "device": "Android A402ZT", "cats": ["歩数", "ポイント"]}, {"id": 0, "q": "・健診ポイントを付与して欲しい", "a": "・健診の結果表とマイナンバーカードで、確認し、QRコードからポイントの付与手続きを行った。", "device": "iPhone", "cats": ["ポイント", "健診ポイント"]}, {"id": 0, "q": "新規にてくポを始めたい", "a": "新規に脳にいいアプリをインストールし、八王子市への申し込みを実施。　歩数設定とバッテリー設定を行い再起動。\nアプリ全体の概要説明を実施。", "device": "Android OPPO Reno ９A", "cats": ["新規登録"]}, {"id": 0, "q": "・スターの使い方を教えて欲しい\n・ボランティア活動で、公式のLINEを登録をして欲しい", "a": "・スターが付与される説明を行った。　スターを200スターを利用して、「年間２回無料で認知機能テスト」が受けられることを説明。\n・ボランティア活動の公式LINEへの登録を行った（簡単だったので登録を行いました。", "device": "シニア向け", "cats": ["新規登録", "使い方", "スター"]}, {"id": 0, "q": "・スターの使い方を教えて欲しい\n・ボランティア活動で、公式のLINEを登録をして欲しい", "a": "・スターが付与される説明を行った。　スターを200スターを利用して、「年間２回無料で認知機能テスト」が受けられることを説明。\n・ボランティア活動の公式LINEへの登録を行った（簡単だったので登録を行いました。", "device": "シニア向け", "cats": ["新規登録", "使い方", "スター"]}, {"id": 0, "q": "・機種変更したので、新しいスマホにアプリを入れて欲しい", "a": "・古い機種のユーザーIDがわかっていたので、新しいスマホにアプリをインストールして、データの引継ぎ処理を行った。\n・Androidスマホだったので、歩数設定を「標準」に変更し、「バッテリの使用を制限なし」に変更し、再起動実施。", "device": "Android Pixel 9a", "cats": ["機種変更"]}, {"id": 0, "q": "・歩数問題で、奥様より、主人のスマホも確認して欲しいとのこと", "a": "・歩数計設定で、省電力を標準に変更したが、「バッテリの使用は、制限なし」になっていた。\n・ご主人に聞くと他の歩数計と比較しても差もなくカウントしてくれているとのこと。", "device": "Android Pixel 9a", "cats": ["歩数"]}, {"id": 0, "q": "①スライドパズルの動画を設定してほしい\n②スターの利用", "a": "①QRコードを読み取りスライドパズルの動画（説明、操作）をスマホに設定\n②現状は認知機能テストのチケットに交換、将来はクーポンに交換。", "device": "Android Pixcel7a", "cats": ["スライドパズル", "スター"]}, {"id": 0, "q": "・歩数が少ない", "a": "・歩数計設定では、「高感度」になっていた。バッテリについて「バッテリの使用は、制限なし」に変更し、再起動", "device": "Android arrows FCG02", "cats": ["歩数"]}, {"id": 0, "q": "・スライドパズルが難しい\n・「スター」の使い方を教えてほしい", "a": "・待っておられる間に、スライドパズルのコツ（動画）を見ていただいていたため、「スライドパズルアシスト」をインストールし、練習して頂くこととした。\n・スターについては、現時点は認知症検査に利用していただくことであることをご説明。　スター利用の手順に関してもご説明。", "device": "iPhone", "cats": ["スライドパズル", "使い方", "スター"]}, {"id": 0, "q": "・てくポを始めたい", "a": "・アプリのインストールとマイナンバーカードによる八王子市へ申込みを行った。\n・ガイドブックに従い、てくポの概要を一通り説明した。\n・Androidスマホだったので、歩数設定を「標準」に変更し、「バッテリの使用を制限なし」に変更し、再起動実施。", "device": "Android Pixel 7", "cats": ["新規登録"]}, {"id": 0, "q": "検診ポイントを付与してもらいたい", "a": "検診結果と受診日、本人確認証（健康保険証）を確認してポイント付与を行った。", "device": "Android", "cats": ["ポイント"]}, {"id": 0, "q": "ポイントをPayPayに交換してほしい。", "a": "・ポイントが２０００ポイント以上貯まっておられた。\n　しかし、PayPayのアプリがインストールされておらず、口座などとの紐づけをしないことを条件にPayPayをインストールし、脳にいいアプリのポイントをPayPayポイントに交換させていただいた。交換ポイントは本人希望の2000ポイント。", "device": "iPhone", "cats": ["ポイント"]}, {"id": 0, "q": "①データ引継ぎ\n②スライドパズルのやり方", "a": "①ユーザーIDの特定を遠山様に依頼\nアプリインストール後データ引継ぎ完了\n歩数計設定を確認後、「省電力」⇒「標準」に設定。\nスマホの設定から電池のステータス確認。再起動\n②スライドパズルの動画（説明、操作）をスマホに設定\n※データ引継ぎのため「ユーザーID」をメモすることをアドバイス", "device": "Android ZTE A402ZT", "cats": ["スライドパズル", "機種変更", "使い方"]}, {"id": 0, "q": "スターの使い方（交換）について教えてほしい", "a": "・スターが何に使えるのかをご理解されておらず、ポイントと同じように欲しいものに交換できると期待されていた。\n　現状、認知症検査のチケットに交換できることをご説明し、ご理解いただきましたが、ご本人にとっては期待が外れた様子でした。", "device": "Android", "cats": ["使い方", "スター"]}, {"id": 0, "q": "1月は歩数が、他の歩数アプリとほぼ一致していたが、2月になって歩数が少なく出るようになった。　歩数設定などは以前見直してもらっている。", "a": "・確認したところ、歩数設定やバッテリ設定は問題ない状況であった。　アプリのバージョンも5.1.2と最新であった。\n再起動はご自身でも行っているとのことでしたので、アプリの再インストールと引継ぎ処理を行って様子を見ていただく方向をご提案した。　ご了解いただいたので、アンインストール後に再インストール（引継ぎ処理）と歩数、バッテリーの設定を行い再起動した。", "device": "Android AQUOS Wish5", "cats": ["歩数"]}, {"id": 0, "q": "・てくポを始めたい", "a": "・アプリのインストールとマイナンバーカードによる八王子市へ申込みを行った。\n・ガイドブックに従い、てくポの概要を一通り説明した。\n・次の予定があり、時間がないということで、歩数問題の処置を行うことができませんでした。\n・使っていて、不明な点があったときは、毎週月曜の12時から16時まで、相談サポートを受けられることを説明した。", "device": "Android シニア", "cats": ["新規登録"]}, {"id": 0, "q": "ウオーキングチャレンジについて", "a": "挑戦中のウオーキングチャレンジの通過地点、未到着地点の歩数の見方をご説明。", "device": "iPhone17", "cats": ["ウォーキング"]}];
+
+QA_DATA.forEach((item, i) => { item.id = i + 1; });
+const ESCALATION_PHONE = '090-XXXX-XXXX'; // 実番号に置き換えてデプロイ
+
+// --- 同義語マッピング ---
+const SYNONYMS = {
+  '歩数': ['歩数', '歩く', 'ウォーキング', '万歩', 'カウント'],
+  '増えない': ['増えない', '増えません', 'カウントされない', '反映されない', '上がらない', '0のまま'],
+  '登録': ['登録', 'インストール', '始め', '新規', 'ダウンロード', '入れ'],
+  'ポイント': ['ポイント', 'pt', 'コイン', '交換', '貯'],
+  'パズル': ['パズル', 'スライド', '脳トレ'],
+  '消え': ['消え', '消して', 'なくなっ', '消失', '復旧', '消去'],
+  '動かない': ['動かない', 'おかしい', '不具合', '真っ白', '立ち上がらない', '開かない', 'フリーズ'],
+  '機種変': ['機種変', '引継', '引き継', '乗り換え', '新しいスマホ'],
+};
+
+// --- カテゴリ定義 ---
+const CATEGORIES = {
+  popular: {
+    title: 'よくある質問からえらぶ',
+    items: [
+      { label: '歩数が増えない', cat: '歩数', icon: '🚶' },
+      { label: '新しく始めたい', cat: '新規登録', icon: '📱' },
+      { label: 'ポイントについて', cat: 'ポイント', icon: '🎁' },
+    ]
+  },
+  howto: {
+    title: '使い方からえらぶ',
+    items: [
+      { label: 'スライドパズル', cat: 'スライドパズル', icon: '🧩' },
+      { label: '脳トレのやり方', cat: '脳トレ', icon: '🧠' },
+      { label: 'QRコードの読み取り', cat: 'QRコード', icon: '📷' },
+    ]
+  },
+  trouble: {
+    title: '困っていることをえらぶ',
+    items: [
+      { label: 'アプリが消えた', cat: 'アプリ消失', icon: '❌' },
+      { label: '動かない・おかしい', cat: '不具合', icon: '⚠️' },
+      { label: '機種を変えた', cat: '機種変更', icon: '🔄' },
+    ]
+  }
+};
+
+// --- 状態管理 ---
+let pendingQuery = '';
+let pendingAction = null; // 'search' or 'category'
+let pendingCat = '';
+let failCount = 0;
+
+// --- ユーティリティ ---
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML.replace(/\n/g, '<br>');
+}
+
+// --- 右パネルコンテンツ切替 ---
+function showRightPanel(id) {
+  document.querySelectorAll('.right-content').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) {
+    target.classList.add('active');
+    // フォーカス管理: 最初の見出しまたはコンテンツにフォーカス
+    const firstFocusable = target.querySelector('h1, h2, .home-title, .suggest-label, .result-count, .no-result-text');
+    if (firstFocusable) {
+      firstFocusable.setAttribute('tabindex', '-1');
+      firstFocusable.focus({ preventScroll: true });
+    }
+    // 右パネルをスクロールトップに
+    const rightPanel = document.querySelector('.right-panel');
+    if (rightPanel) rightPanel.scrollTop = 0;
+  }
+}
+
+// --- ホーム画面に戻る ---
+function goHome() {
+  failCount = 0;
+  showRightPanel('welcomeContent');
+}
+
+// --- カテゴリ選択 ---
+function showCategory(type) {
+  const cat = CATEGORIES[type];
+  document.getElementById('catTitle').textContent = cat.title;
+  const grid = document.getElementById('catGrid');
+
+  // カテゴリボタン生成（addEventListener使用）
+  grid.innerHTML = '';
+  cat.items.forEach(item => {
+    const count = QA_DATA.filter(d => d.cats.includes(item.cat)).length;
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.innerHTML = `<span style="font-size:1.4rem;">${item.icon}</span>
+      <span>${escapeHtml(item.label)}</span>
+      <span class="count">${count}件</span>`;
+    btn.setAttribute('aria-label', item.label + '（' + count + '件）');
+    btn.addEventListener('click', function() {
+      // 確認ダイアログを表示
+      pendingQuery = item.label;
+      pendingAction = 'category';
+      pendingCat = item.cat;
+      document.getElementById('confirmQuery').textContent = item.label;
+      document.getElementById('confirmDialog').classList.add('show');
+    });
+    grid.appendChild(btn);
+  });
+
+  showRightPanel('categoryContent');
+}
+
+// --- 確認ダイアログ ---
+function showConfirm(query) {
+  pendingQuery = query;
+  pendingAction = 'search';
+  document.getElementById('confirmQuery').textContent = query;
+  document.getElementById('confirmDialog').classList.add('show');
+}
+
+function hideConfirm() {
+  document.getElementById('confirmDialog').classList.remove('show');
+}
+
+function executeConfirmed() {
+  hideConfirm();
+  if (pendingAction === 'category') {
+    const results = QA_DATA.filter(d => d.cats.includes(pendingCat));
+    showResultsUI(results, pendingQuery);
+  } else {
+    // テキスト検索
+    executeSearch();
+  }
+}
+
+// --- 検索機能 ---
+function searchDirect(query) {
+  showConfirm(query);
+}
+
+function submitFreeInput() {
+  const input = document.getElementById('freeInput');
+  const query = input.value.trim();
+  if (!query) return;
+  showConfirm(query);
+}
+
+function executeSearch() {
+  const query = pendingQuery;
+
+  // ローディング表示
+  showRightPanel('resultContent');
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('resultArea').innerHTML = '';
+  document.getElementById('suggestMore').style.display = 'none';
+
+  // 検索実行（300msの遅延でローディング体感）
+  setTimeout(() => {
+    const results = fullTextSearch(query);
+    document.getElementById('loading').classList.remove('show');
+    showResultsUI(results, query);
+  }, 300);
+}
+
+// --- 全文検索エンジン ---
+function fullTextSearch(query) {
+  const terms = query.toLowerCase()
+    .replace(/[。、！？・\s]+/g, ' ')
+    .split(' ')
+    .filter(t => t.length > 0);
+
+  // 検索語を同義語で拡張
+  let expandedTerms = [...terms];
+  for (const [key, syns] of Object.entries(SYNONYMS)) {
+    if (terms.some(t => syns.some(s => s.includes(t) || t.includes(s)))) {
+      expandedTerms = [...expandedTerms, ...syns];
+    }
+  }
+  expandedTerms = [...new Set(expandedTerms)];
+
+  // スコアリング
+  const scored = QA_DATA.map(item => {
+    const qLower = item.q.toLowerCase();
+    const aLower = item.a.toLowerCase();
+    let score = 0;
+
+    for (const term of expandedTerms) {
+      // 相談内容にマッチ（重み3倍）
+      if (qLower.includes(term)) score += 3;
+      // 対応内容にマッチ
+      if (aLower.includes(term)) score += 1;
+    }
+
+    // 元の検索語に完全一致するものはボーナス
+    for (const term of terms) {
+      if (qLower.includes(term)) score += 5;
+    }
+
+    return { ...item, score };
+  }).filter(item => item.score > 0);
+
+  // スコア順にソート、上位10件
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, 10);
+}
+
+// --- 検索結果表示 ---
+function showResultsUI(results, query) {
+  showRightPanel('resultContent');
+  const area = document.getElementById('resultArea');
+
+  if (results.length === 0) {
+    failCount++;
+    let html = '<div class="card no-result">' +
+      '<div class="no-result-icon">🤔</div>' +
+      '<div class="no-result-text">見つかりませんでした</div>' +
+      '<div class="no-result-sub">「' + escapeHtml(query) + '」に合う情報がありませんでした</div>' +
+      '</div>';
+
+    // 2回失敗でエスカレーション表示
+    if (failCount >= 2) {
+      html += '<div class="escalation-box">' +
+        '<div class="escalation-icon">📞</div>' +
+        '<div class="escalation-text">お電話でお問い合わせください</div>' +
+        '<div class="escalation-phone">遠山: ' + escapeHtml(ESCALATION_PHONE) + '</div>' +
+        '</div>';
+    }
+
+    area.innerHTML = html;
+    showRelatedSuggestions(query);
+    return;
+  }
+
+  // 結果あり — failCountリセット
+  failCount = 0;
+
+  // 上位5件を表示
+  const topResults = results.slice(0, 5);
+
+  let html = '<div class="result-count">' + results.length + '件見つかりました</div>';
+  topResults.forEach(function(r) {
+    html += '<div class="answer-card">' +
+      '<div class="answer-label">相談内容</div>' +
+      '<div class="answer-q">' + escapeHtml(r.q) + '</div>' +
+      '<div class="answer-label">対応した内容</div>' +
+      '<div class="answer-text">' + escapeHtml(r.a) + '</div>';
+    if (r.device) {
+      html += '<div class="answer-meta"><span class="answer-device">📱 ' + escapeHtml(r.device) + '</span></div>';
+    }
+    html += '</div>';
+  });
+
+  area.innerHTML = html;
+  showRelatedSuggestions(query);
+}
+
+// --- 関連サジェスト表示 ---
+function showRelatedSuggestions(query) {
+  const relatedQueries = [
+    '歩数が増えない',
+    '新しくアプリを入れたい',
+    'ポイントがもらえない',
+    'スライドパズルのやり方',
+    'アプリが消えた',
+    '機種を変えたらどうする',
+    'QRコードの読み取り方',
+    '画面が真っ白になった'
+  ].filter(q => q !== query).slice(0, 3);
+
+  const container = document.getElementById('suggestMore');
+  const btnsContainer = document.getElementById('suggestMoreBtns');
+
+  // addEventListener使用
+  btnsContainer.innerHTML = '';
+  relatedQueries.forEach(function(q) {
+    const btn = document.createElement('button');
+    btn.className = 'suggest-btn';
+    btn.textContent = q;
+    btn.addEventListener('click', function() {
+      searchDirect(q);
+    });
+    btnsContainer.appendChild(btn);
+  });
+
+  container.style.display = 'block';
+}
+
+// --- 音声入力 ---
+function startVoice() {
+  var btn = document.getElementById('voiceBtn');
+  if (btn.classList.contains('recording')) return; // 二重起動防止
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    // カスタムダイアログで通知（やまとことば）
+    pendingQuery = '';
+    document.getElementById('confirmQuery').textContent = 'この端末では声でのご質問ができません';
+    document.getElementById('confirmText').textContent = 'お知らせ';
+    document.getElementById('confirmDialog').classList.add('show');
+    // 「はい」ボタンを一時的に非表示
+    document.getElementById('confirmYesBtn').style.display = 'none';
+    document.getElementById('confirmNoBtn').textContent = '閉じる';
+    return;
+  }
+
+  var SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognition = new SpeechRecognitionAPI();
+  recognition.lang = 'ja-JP';
+  recognition.interimResults = false;
+
+  btn.classList.add('recording');
+  btn.textContent = '🔴';
+
+  recognition.onresult = function(event) {
+    var text = event.results[0][0].transcript;
+    document.getElementById('freeInput').value = text;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    searchDirect(text);
+  };
+
+  recognition.onerror = function(e) {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    if (e.error === 'no-speech') {
+      // 無言→静かに終了
+    } else if (e.error !== 'aborted') {
+      // カスタムダイアログでフィードバック
+      pendingQuery = '';
+      document.getElementById('confirmQuery').textContent = '声を聞き取れませんでした。もう一度お試しください。';
+      document.getElementById('confirmText').textContent = 'お知らせ';
+      document.getElementById('confirmDialog').classList.add('show');
+      document.getElementById('confirmYesBtn').style.display = 'none';
+      document.getElementById('confirmNoBtn').textContent = '閉じる';
+    }
+  };
+
+  recognition.onend = function() {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+  };
+
+  recognition.start();
+}
+
+// --- エスカレーション（カスタムダイアログ版） ---
+function callEscalation() {
+  document.getElementById('escalationPhone').textContent = ESCALATION_PHONE;
+  document.getElementById('escalationDialog').classList.add('show');
+}
+
+function hideEscalation() {
+  document.getElementById('escalationDialog').classList.remove('show');
+}
+
+function executeEscalation() {
+  hideEscalation();
+  window.location.href = 'tel:' + ESCALATION_PHONE.replace(/-/g, '');
+}
+
+// --- イベントリスナー登録 ---
+document.addEventListener('DOMContentLoaded', function() {
+  // 検索送信
+  document.getElementById('searchSubmitBtn').addEventListener('click', submitFreeInput);
+
+  // 音声ボタン
+  document.getElementById('voiceBtn').addEventListener('click', startVoice);
+
+  // Enter キーで検索
+  document.getElementById('freeInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitFreeInput();
+    }
+  });
+
+  // 確認ダイアログ
+  document.getElementById('confirmNoBtn').addEventListener('click', function() {
+    hideConfirm();
+    // リセット（音声エラー通知後の復帰）
+    document.getElementById('confirmText').textContent = 'この内容で聞いてもいいですか？';
+    document.getElementById('confirmYesBtn').style.display = '';
+    document.getElementById('confirmNoBtn').textContent = 'やめる';
+  });
+  document.getElementById('confirmYesBtn').addEventListener('click', executeConfirmed);
+  document.getElementById('confirmDialog').addEventListener('click', function(event) {
+    if (event.target === this) {
+      hideConfirm();
+      document.getElementById('confirmText').textContent = 'この内容で聞いてもいいですか？';
+      document.getElementById('confirmYesBtn').style.display = '';
+      document.getElementById('confirmNoBtn').textContent = 'やめる';
+    }
+  });
+
+  // エスカレーションダイアログ
+  document.getElementById('escalationNoBtn').addEventListener('click', hideEscalation);
+  document.getElementById('escalationYesBtn').addEventListener('click', executeEscalation);
+  document.getElementById('escalationDialog').addEventListener('click', function(event) {
+    if (event.target === this) hideEscalation();
+  });
+
+  // エスカレーションボタン（左パネル + 下部バー）
+  document.getElementById('escalationBtn').addEventListener('click', callEscalation);
+  document.getElementById('bottomCallBtn').addEventListener('click', callEscalation);
+
+  // ホームボタン（下部バー）
+  document.getElementById('bottomHomeBtn').addEventListener('click', goHome);
+
+  // おすすめ質問ボタン（addEventListener使用）
+  document.querySelectorAll('#welcomeSuggestBtns .suggest-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var query = this.getAttribute('data-query');
+      if (query) searchDirect(query);
+    });
+  });
+});
+</script>
+</body>
+</html>
